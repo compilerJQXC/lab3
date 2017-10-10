@@ -3,7 +3,7 @@
 #define NRW        16     // number of reserved words
 #define TXMAX      500    // length of identifier table
 #define MAXNUMLEN  14     // maximum number of digits in numbers
-#define NSYM       15     // maximum number of symbols in array ssym and csym
+#define NSYM       17     // maximum number of symbols in array ssym and csym
 #define MAXIDLEN   10     // length of identifiers
 
 #define MAXADDRESS 32767  // maximum address
@@ -56,10 +56,14 @@ enum symtype
 	SYM_EXIT,
 	SYM_RETURN,
 	SYM_FOR,
-	SYM_AND,
-	SYM_OR,
+	SYM_AND, //&&
+	SYM_OR,  //||
 	SYM_DPLUS,
-	SYM_DMINUS
+	SYM_DMINUS,
+	SYM_ANDBIT,  //&
+	SYM_ORBIT,  //|
+	SYM_XOR,  //^
+	SYM_MOD   //%
 };
 /*9.19增加了SYM_RETURN之后的几项*/
 
@@ -78,7 +82,8 @@ enum oprcode
 	OPR_RET, OPR_NEG, OPR_ADD, OPR_MIN,
 	OPR_MUL, OPR_DIV, OPR_ODD, OPR_EQU,
 	OPR_NEQ, OPR_LES, OPR_LEQ, OPR_GTR,
-	OPR_GEQ, OPR_AND, OPR_OR, OPR_NOT   //9.30号添加了与 或操作
+	OPR_GEQ, OPR_AND, OPR_OR, OPR_NOT,   //9.30号添加了与 或 非操作
+	OPR_MOD, OPR_ANDBIT, OPR_ORBIT ,OPR_XOR     //10.9添加取模操作,按位与，按位或，异或
 };
 
 
@@ -161,12 +166,13 @@ int wsym[NRW + 1] =
 int ssym[NSYM + 1] =
 {
 	SYM_NULL, SYM_PLUS, SYM_MINUS, SYM_TIMES, SYM_SLASH,
-	SYM_LPAREN, SYM_RPAREN, SYM_EQU, SYM_COMMA, SYM_PERIOD, SYM_SEMICOLON,SYM_NOT,SYM_LEFTSPAREN,SYM_RIGHTSPAREN,SYM_DPLUS,SYM_DMINUS
+	SYM_LPAREN, SYM_RPAREN, SYM_EQU, SYM_COMMA, SYM_PERIOD, SYM_SEMICOLON,SYM_NOT,SYM_LEFTSPAREN,SYM_RIGHTSPAREN,
+	SYM_XOR,SYM_MOD
 };
 
 char csym[NSYM + 1] =
 {
-	' ', '+', '-', '*', '/', '(', ')', '=', ',', '.', ';','!','[',']'
+	' ', '+', '-', '*', '/', '(', ')', '=', ',', '.', ';','!','[',']','^','%'
 };
 /*9.19增加了 感叹号和两个中括号*/
 

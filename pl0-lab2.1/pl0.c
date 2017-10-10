@@ -182,7 +182,7 @@ void getsym(void)
 		}
 		else 
 		{
-			sym = SYM_NULL;
+			sym = SYM_ANDBIT;
 		}
 	}
 	else if(ch == '|')
@@ -195,7 +195,7 @@ void getsym(void)
 		}
 		else 
 		{
-			sym = SYM_NULL;
+			sym = SYM_ORBIT;
 		}
 	}	
 /************************---------------------------*****************************/							
@@ -363,7 +363,7 @@ void listcode(int from, int to)
 //////////////////////////////////////////////////////////////////////
 void factor(symset fsys)
 {
-	void expression(symset fsys);
+	void expr_andbit(symset fsys);
 	int i;
 	symset set;
 	
@@ -410,7 +410,8 @@ void factor(symset fsys)
 		{
 			getsym();
 			set = uniteset(createset(SYM_RPAREN, SYM_NULL), fsys);
-			expression(set);
+			expr_andbit(set);
+			//expression(set);
 			destroyset(set);
 			if (sym == SYM_RPAREN)
 			{
@@ -424,14 +425,16 @@ void factor(symset fsys)
 		else if(sym == SYM_MINUS) // UMINUS,  Expr -> '-' Expr
 		{  
 			 getsym();
-			 expression(fsys);
+			 expr_andbit(fsys);
+			 //expression(fsys);
 			 gen(OPR, 0, OPR_NEG); //不是减
 		}
 		/***************9.30添加下面的非***************/
 		else if(sym == SYM_NOT)
 		{
 			getsym();
-			expression(fsys);
+			expr_andbit(fsys);
+			//expression(fsys);
 			gen(OPR,0,OPR_NOT);  //NOT
 		}
 		test(fsys, createset(SYM_LPAREN, SYM_NULL), 23);
@@ -443,10 +446,10 @@ void term(symset fsys)
 {
 	int mulop;
 	symset set;
-	
-	set = uniteset(fsys, createset(SYM_TIMES, SYM_SLASH, SYM_NULL));
+/****************10.9添加SYM_MOD***********************/
+	set = uniteset(fsys, createset(SYM_TIMES, SYM_SLASH,SYM_MOD, SYM_NULL));
 	factor(set);
-	while (sym == SYM_TIMES || sym == SYM_SLASH)  //乘除
+	while (sym == SYM_TIMES || sym == SYM_SLASH || sym == SYM_MOD)  //乘除模
 	{
 		mulop = sym;
 		getsym();
@@ -454,6 +457,10 @@ void term(symset fsys)
 		if (mulop == SYM_TIMES)
 		{
 			gen(OPR, 0, OPR_MUL);
+		}
+		else if(mulop == SYM_MOD)
+		{
+			gen(OPR, 0 , OPR_MOD);
 		}
 		else
 		{
@@ -491,6 +498,27 @@ void expression(symset fsys)
 } // expression
 
 //////////////////////////////////////////////////////////////////////
+/************************10.10添加下面的函数*********************/
+void expr_andbit(symset fsys)
+{
+	symset set;
+
+	set = uniteset(fsys, createset(SYM_ANDBIT,SYM_NULL));
+	
+	expression(set);
+	//term(set);
+	while (sym == SYM_ANDBIT)
+	{
+		getsym();
+		expression(set);
+		//term(set);
+		gen(OPR, 0, OPR_ANDBIT);
+	} // while
+
+	destroyset(set);
+}
+
+////////////////////////////////////////////////////
 void condition(symset fsys)
 {
 	int relop;
@@ -498,13 +526,15 @@ void condition(symset fsys)
 	if (sym == SYM_ODD)
 	{
 		getsym();
-		expression(fsys);
+		expr_andbit(fsys);
+		//expression(fsys);
 		gen(OPR, 0, 6);  //OPR_ODD
 	}
 	else
 	{
 		//set = uniteset(relset, fsys);
-		expression(relset);
+		expr_andbit(relset);
+		//expression(relset);
 		//destroyset(set);
 		if (! inset(sym, relset))
 		{
@@ -600,7 +630,8 @@ void statement(symset fsys)
 		{
 			error(13); // ':=' expected.
 		}
-		expression(fsys);
+		expr_andbit(fsys);
+		//expression(fsys);
 		mk = (mask*) &table[i];
 		if (i)
 		{
@@ -651,7 +682,7 @@ void statement(symset fsys)
 			error(16); // 'then' expected.
 		}
 		cx1 = cx;
-		gen(JPC, 0, 0);
+		gen(JPC, 0, 0);  //conditions to jump,the place jump to is not sure now
 		statement(fsys);
 		code[cx1].a = cx;	
 	}
@@ -669,7 +700,7 @@ void statement(symset fsys)
 			}
 			else
 			{
-				error(10);
+				error(10);  //"';' expected.",
 			}
 			statement(set);
 		} // while
@@ -705,7 +736,7 @@ void statement(symset fsys)
 			error(18); // 'do' expected.
 		}
 		statement(fsys);
-		gen(JMP, 0, cx1);
+		gen(JMP, 0, cx1);   //no conditions to jump
 		code[cx2].a = cx;
 	}
 	test(fsys, phi, 19);
@@ -733,13 +764,13 @@ void block(symset fsys)
 	{
 		if (sym == SYM_CONST)
 		{ // constant declarations
-			getsym();
 			do
 			{
-				constdeclaration();
+				getsym();
+				constdeclaration();   
 				while (sym == SYM_COMMA)
 				{
-					getsym();
+					getsym();    //there may be several const vars behind const
 					constdeclaration();
 				}
 				if (sym == SYM_SEMICOLON)
@@ -751,14 +782,15 @@ void block(symset fsys)
 					error(5); // Missing ',' or ';'.
 				}
 			}
-			while (sym == SYM_IDENTIFIER);
+/*******10.9勘误，这里之前写的sym == SYM_IDENTIFIER,明显不对*******/
+			while (sym == SYM_CONST);
 		} // if
 
 		if (sym == SYM_VAR)
 		{ // variable declarations
-			getsym();
 			do
 			{
+				getsym();
 				vardeclaration();
 				while (sym == SYM_COMMA)
 				{
@@ -774,7 +806,8 @@ void block(symset fsys)
 					error(5); // Missing ',' or ';'.
 				}
 			}
-			while (sym == SYM_IDENTIFIER);
+/*******10.9勘误，这里之前写的sym == SYM_IDENTIFIER,明显不对*******/
+			while (sym == SYM_VAR);
 		} // if
 		block_dx = dx; //save dx before handling procedure call!
 		while (sym == SYM_PROCEDURE)
@@ -944,7 +977,7 @@ void interpret()
 			/***9.30添加↓↓↓↓*/
 			case OPR_AND:
 				top--;
-				stack[top] = (stack[top] && stack[top + 1]);   //注意加括号，不加括号意义完全变了
+				stack[top] = (stack[top] && stack[top + 1]);   
 				break;
 			case OPR_OR:
 				top--;
@@ -952,6 +985,14 @@ void interpret()
 				break;
 			case OPR_NOT:
 				stack[top] = !stack[top];
+				break;
+			case OPR_MOD:
+				top--;
+				stack[top] = stack[top] % stack[top + 1];
+				break;
+			case OPR_ANDBIT:
+				top--;
+				stack[top] = (stack[top] & stack[top + 1]);
 				break;
 			} // switch
 			break;
@@ -1011,6 +1052,7 @@ void main ()
 	// create begin symbol sets
 	declbegsys = createset(SYM_CONST, SYM_VAR, SYM_PROCEDURE, SYM_NULL);
 	statbegsys = createset(SYM_BEGIN, SYM_CALL, SYM_IF, SYM_WHILE, SYM_NULL);
+	/*************************9.30添加下面的SYM_NOT****************************/
 	facbegsys = createset(SYM_IDENTIFIER, SYM_NUMBER, SYM_LPAREN, SYM_MINUS, SYM_NOT,SYM_NULL);
 
 	err = cc = cx = ll = 0; // initialize global variables
