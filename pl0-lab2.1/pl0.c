@@ -178,7 +178,7 @@ void getsym(void)
 			sym = ssym[4];
 		}
 	}
-/************************9.19增加了下面这个else if语句块*****************************/
+	// ************************9.19增加了下面这个else if语句块*****************************
 	else if(ch == '&')
 	{
 		getch();
@@ -205,7 +205,7 @@ void getsym(void)
 			sym = SYM_ORBIT;
 		}
 	}	
-/************************---------------------------*****************************/							
+	// ************************---------------------------*****************************/							
 	else
 	{ // other tokens
 		i = NSYM;  
@@ -215,7 +215,7 @@ void getsym(void)
 		{
 			sym = ssym[i];
 			getch();
-/****************************9.19 增加了下面的语句块 用来判断 ++ 和 -- *************************/
+	// *****************************9.19 增加了下面的语句块 用来判断 ++ 和 -- *************************/
 			if( sym==SYM_PLUS   &&  ch=='+')
 			{
 				sym=SYM_DPLUS;
@@ -226,7 +226,7 @@ void getsym(void)
 				sym=SYM_DMINUS;
 				getch();
 			}
-/****************************-------------------------------------*************************/
+	// * ****************************-------------------------------------*************************/
 		}
 		else  //不是其中一个，无法识别的符号
 		{
@@ -436,7 +436,7 @@ void factor(symset fsys)
 			 //expression(fsys);
 			 gen(OPR, 0, OPR_NEG); //不是减
 		}
-		/***************9.30添加下面的非***************/
+		//***************9.30添加下面的非***************
 		else if(sym == SYM_NOT)
 		{
 			getsym();
@@ -453,7 +453,7 @@ void term(symset fsys)
 {
 	int mulop;
 	symset set;
-/****************10.9添加SYM_MOD***********************/
+	//****************10.9添加SYM_MOD***********************
 	set = uniteset(fsys, createset(SYM_TIMES, SYM_SLASH,SYM_MOD,SYM_XOR,SYM_NULL));
 	factor(set);
 	while (sym == SYM_TIMES || sym == SYM_SLASH || sym == SYM_MOD || sym == SYM_XOR)  //乘除模
@@ -649,6 +649,7 @@ void statement(symset fsys)
 			gen(STO, level - mk->level, mk->address);
 		}
 	}
+	/*
 	else if (sym == SYM_CALL)
 	{ // procedure call
 		getsym();
@@ -675,6 +676,7 @@ void statement(symset fsys)
 			getsym();
 		}
 	} 
+	*/
 	else if (sym == SYM_IF)
 	{ // if statement
 		getsym();
@@ -793,7 +795,7 @@ void block(symset fsys)
 					error(5); // Missing ',' or ';'.
 				}
 			}
-/*******10.9勘误，这里之前写的sym == SYM_IDENTIFIER,明显不对*******/
+	/*******10.9勘误，这里之前写的sym == SYM_IDENTIFIER,明显不对*******/
 			while (sym == SYM_CONST);
 		} // if
 
@@ -817,7 +819,7 @@ void block(symset fsys)
 					error(5); // Missing ',' or ';'.
 				}
 			}
-/*******10.9勘误，这里之前写的sym == SYM_IDENTIFIER,明显不对*******/
+	/*******10.9勘误，这里之前写的sym == SYM_IDENTIFIER,明显不对*******/
 			while (sym == SYM_VAR);
 		} // if
 		block_dx = dx; //save dx before handling procedure call!
@@ -922,7 +924,7 @@ void interpret()
 		i = code[pc++];
 		switch (i.f)
 		{
-		case LIT:
+		case LIT:	// push a count on stack top.
 			stack[++top] = i.a;
 			break;
 		case OPR:
@@ -930,8 +932,8 @@ void interpret()
 			{
 			case OPR_RET:
 				top = b - 1;
-				pc = stack[top + 3];
-				b = stack[top + 2];
+				pc = stack[top + 3]; // address of next instruction
+				b = stack[top + 2]; // old base of caller
 				break;
 			case OPR_NEG:
 				stack[top] = -stack[top];
@@ -1012,14 +1014,14 @@ void interpret()
 			} // switch
 			break;
 		case LOD:
-			stack[++top] = stack[base(stack, b, i.l) + i.a];
+			stack[++top] = stack[base(stack, b, i.l) + i.a]; // push var on stack 
 			break;
-		case STO:
+		case STO: // store var on stack
 			stack[base(stack, b, i.l) + i.a] = stack[top];
 			printf("%d\n", stack[top]);
 			top--;
 			break;
-		case CAL:
+		case CAL: 
 			stack[top + 1] = base(stack, b, i.l);
 			// generate new block mark
 			stack[top + 2] = b;
