@@ -47,7 +47,7 @@ void getch(void)
 			line[++ll] = ch;
 		} // while
 		printf("\n");
-		line[++ll] = ' ';
+		line[++ll] = ' ';// ' ' in place of  '\n'
 	}
 	ch = line[++cc];//将line[1]中的元素赋值给ch。
 } // getch
@@ -140,6 +140,13 @@ void getsym(void)
 			sym = SYM_LES;     // <
 		}
 	}
+	//****10.19
+	else if (ch == '^')
+	{
+		sym = SYM_XOR;
+		getch();
+	}
+	//**********
 	else if (ch == '/')
 	{
 		getch();
@@ -447,9 +454,9 @@ void term(symset fsys)
 	int mulop;
 	symset set;
 /****************10.9添加SYM_MOD***********************/
-	set = uniteset(fsys, createset(SYM_TIMES, SYM_SLASH,SYM_MOD, SYM_NULL));
+	set = uniteset(fsys, createset(SYM_TIMES, SYM_SLASH,SYM_MOD,SYM_XOR,SYM_NULL));
 	factor(set);
-	while (sym == SYM_TIMES || sym == SYM_SLASH || sym == SYM_MOD)  //乘除模
+	while (sym == SYM_TIMES || sym == SYM_SLASH || sym == SYM_MOD || sym == SYM_XOR)  //乘除模
 	{
 		mulop = sym;
 		getsym();
@@ -461,6 +468,10 @@ void term(symset fsys)
 		else if(mulop == SYM_MOD)
 		{
 			gen(OPR, 0 , OPR_MOD);
+		}
+		else if(mulop ==SYM_XOR)
+		{
+			gen(OPR, 0 , OPR_XOR);
 		}
 		else
 		{
@@ -990,6 +1001,10 @@ void interpret()
 				top--;
 				stack[top] = stack[top] % stack[top + 1];
 				break;
+			case OPR_XOR:
+				top--;
+				stack[top] = stack[top] ^ stack[top +1];
+				break;
 			case OPR_ANDBIT:
 				top--;
 				stack[top] = (stack[top] & stack[top + 1]);
@@ -1061,8 +1076,8 @@ void main ()
 
 	getsym();
 
-	set1 = createset(SYM_PERIOD, SYM_NULL);
-	set2 = uniteset(declbegsys, statbegsys);
+	set1 = createset(SYM_PERIOD, SYM_NULL); // end set
+	set2 = uniteset(declbegsys, statbegsys); // begin set
 	set = uniteset(set1, set2);
 	block(set);
 	destroyset(set1);

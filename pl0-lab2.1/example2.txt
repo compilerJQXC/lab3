@@ -1,0 +1,7 @@
+const a=1;
+var x,y;
+begin
+	y :=2;
+	x := 1;
+	x := x^y;
+end.
