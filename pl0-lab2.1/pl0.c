@@ -270,6 +270,7 @@ void test(symset s1, symset s2, int n)
 //////////////////////////////////////////////////////////////////////
 int dx;  // data allocation index
 
+int pcount=-2;
 // enter object(constant, variable or procedre) into table.
 void enter(int kind)
 {
@@ -299,6 +300,18 @@ void enter(int kind)
 		break;
 	} // switch
 } // enter
+
+void enterPara(char *idTemp,int kind)
+{
+	mask* mk;
+	tx++;
+	strcpy(table[tx].name, idTemp);
+	table[tx].kind = kind;
+	mk = (mask*) &table[tx];
+	mk->level = level;
+	mk->address = pcount--;
+	printf("Message of var in table is : name = %s  level = %d  address = %d",table[tx].name,mk->level,(int)(mk->address));
+}
 
 //////////////////////////////////////////////////////////////////////
 // locates identifier in symbol table.
@@ -754,7 +767,42 @@ void statement(symset fsys)
 	}
 	test(fsys, phi, 19);
 } // statement
-			
+
+void paraList()
+{
+	int presym=sym;
+	getsym();
+	if(presym == SYM_LPAREN)
+	{
+		if(sym == SYM_IDENTIFIER)
+		{
+			char idTemp[MAXIDLEN + 1]; 
+			strcpy(idTemp, id);
+			paraList();
+			enterPara(idTemp,ID_VARIABLE);
+		}
+		else if(sym == SYM_RPAREN)return;
+		else error(26);
+	}
+	else if(presym == SYM_COMMA)
+	{
+		if(sym == SYM_IDENTIFIER)
+		{
+			char idTemp[MAXIDLEN + 1]; 
+			strcpy(idTemp, id);
+			paraList();
+			enterPara(idTemp,ID_VARIABLE);
+		}
+		else error(26);
+	}
+	else if(presym == SYM_IDENTIFIER)
+	{
+		if(sym == SYM_RPAREN)return;
+		else if(sym == SYM_COMMA)paraList();
+		else error(26);
+	}
+	else error(26);
+}		
 //////////////////////////////////////////////////////////////////////
 void block(symset fsys)
 {
@@ -772,6 +820,11 @@ void block(symset fsys)
 	if (level > MAXLEVEL)
 	{
 		error(32); // There are too many levels.
+	}
+	if(sym == SYM_LPAREN)
+	{
+		paraList();
+		getsym();
 	}
 	do
 	{
@@ -836,15 +889,6 @@ void block(symset fsys)
 				error(4); // There must be an identifier to follow 'const', 'var', or 'procedure'.
 			}
 
-
-			if (sym == SYM_SEMICOLON)
-			{
-				getsym();
-			}
-			else
-			{
-				error(5); // Missing ',' or ';'.
-			}
 
 			level++;
 			savedTx = tx;
