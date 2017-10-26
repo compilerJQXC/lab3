@@ -1,5 +1,9 @@
 var i;
+procedure q;
+begin
+	i:=11;
+end;
 begin
 	i:=1;
-	if 2 > 3 then i:=2;
+	call q;
 end.

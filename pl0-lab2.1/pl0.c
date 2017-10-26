@@ -649,7 +649,7 @@ void statement(symset fsys)
 			gen(STO, level - mk->level, mk->address);
 		}
 	}
-	/*
+	
 	else if (sym == SYM_CALL)
 	{ // procedure call
 		getsym();
@@ -676,7 +676,7 @@ void statement(symset fsys)
 			getsym();
 		}
 	} 
-	*/
+	
 	else if (sym == SYM_IF)
 	{ // if statement
 		getsym();
