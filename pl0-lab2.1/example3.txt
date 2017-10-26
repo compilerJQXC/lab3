@@ -1,0 +1,5 @@
+var i;
+begin
+	i:=1;
+	if 2 > 3 then i:=2;
+end.
