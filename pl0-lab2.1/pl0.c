@@ -628,6 +628,71 @@ void conditions_or(symset fsys)
 }
 /****************↑↑↑↑9.30号添加↑↑↑↑************************/
 
+
+//**********************1026*****************************
+void procedureCall()
+{
+	int presym=sym;
+	int i;
+	getsym();
+	mask *mk;
+	if(sym == SYM_IDENTIFIER)
+	{
+		if(presym != SYM_LPAREN && presym != SYM_COMMA)
+		{
+			printf("Error in procedureCall 1\n");
+			error(26);
+		}
+		else
+		{
+			i =position(id);
+			printf("i = %d  and id = %s \n",i,id);
+			if(i)
+			{
+				printf("***************************i = %d \n",i);
+				mk = (mask*) &table[i];
+				gen(LOD, level - mk->level, mk->address);
+				procedureCall();
+			}
+			else
+			{
+				printf("Error in procedureCall 1.5\n");
+				error(26);
+			}
+
+		}
+	}
+	else if(sym == SYM_COMMA)
+	{
+		if(presym != SYM_IDENTIFIER)
+		{
+			printf("Error in procedureCall 2\n");
+			error(26);
+		}
+		else procedureCall();
+	}
+	else if(sym == SYM_RPAREN)
+	{
+		if(presym != SYM_IDENTIFIER && presym != SYM_LPAREN)
+		{
+			printf("Error in procedureCall 3\n");
+			error(26);
+		}
+		else
+		{
+			 gen(INT,0,1);
+			 return;
+		}  // for return value
+	}
+	else
+	{
+		printf("Error in procedureCall 4\n");
+		error(26);
+	}
+}
+
+//******************************************************
+
 void statement(symset fsys)
 {
 	int i, cx1, cx2;
@@ -640,26 +705,45 @@ void statement(symset fsys)
 		{
 			error(11); // Undeclared identifier.
 		}
+		///****************1026*****************************
 		else if (table[i].kind != ID_VARIABLE)
 		{
-			error(12); // Illegal assignment.
-			i = 0;
-		}
-		getsym();
-		if (sym == SYM_BECOMES)
-		{
+			if(table[i].kind == ID_PROCEDURE)printf("Hello World!!\n");
 			getsym();
+			if(sym == SYM_LPAREN)
+			{
+				procedureCall();
+				mask* mk;
+				mk = (mask*) &table[i];
+				gen(CAL, level - mk->level, mk->address);
+				getsym();
+			}
+			else
+			{
+				printf("Error in statement .After procedureCall \n");
+				exit(0);
+			}
 		}
+		/////////******************************************
 		else
 		{
-			error(13); // ':=' expected.
-		}
-		expr_andbit(fsys);
-		//expression(fsys);
-		mk = (mask*) &table[i];
-		if (i)
-		{
-			gen(STO, level - mk->level, mk->address);
+			getsym();
+			if (sym == SYM_BECOMES)
+			{
+				getsym();
+			}
+			else
+			{
+				error(13); // ':=' expected.
+			}
+			expr_andbit(fsys);
+			//expression(fsys);
+			mk = (mask*) &table[i];
+			if (i)
+			{
+				gen(STO, level - mk->level, mk->address);
+			}
+				/* code */
 		}
 	}
 	
@@ -765,7 +849,7 @@ void statement(symset fsys)
 		gen(JMP, 0, cx1);   //no conditions to jump
 		code[cx2].a = cx;
 	}
-	test(fsys, phi, 19);
+	// test(fsys, phi, 19);
 } // statement
 
 void paraList()
@@ -782,7 +866,11 @@ void paraList()
 			enterPara(idTemp,ID_VARIABLE);
 		}
 		else if(sym == SYM_RPAREN)return;
-		else error(26);
+		else
+		{
+			printf("error in paraList 1\n");
+			error(26);
+		}
 	}
 	else if(presym == SYM_COMMA)
 	{
@@ -793,15 +881,27 @@ void paraList()
 			paraList();
 			enterPara(idTemp,ID_VARIABLE);
 		}
-		else error(26);
+		else
+		{
+			printf("error in paraList 2\n");
+			error(26);
+		}
 	}
 	else if(presym == SYM_IDENTIFIER)
 	{
 		if(sym == SYM_RPAREN)return;
 		else if(sym == SYM_COMMA)paraList();
-		else error(26);
+		else
+		{
+			printf("error in paraList 3\n");
+			error(26);
+		}
 	}
-	else error(26);
+	else
+	{
+		printf("error in paraList 4\n");
+		error(26);
+	}
 }		
 //////////////////////////////////////////////////////////////////////
 void block(symset fsys)

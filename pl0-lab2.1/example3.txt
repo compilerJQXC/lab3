@@ -1,9 +1,16 @@
 var i;
-procedure q(n)
+var j;
+var k;
+procedure q(n,m,p)
 begin
 	n:=10;
+	m:=20;
+	p:=30;
+	n:=p+m;
 end;
 begin
 	i:=1;
-	call q;
+	j:=i+1;
+	k:=12;
+	q(i,j,k);
 end.
