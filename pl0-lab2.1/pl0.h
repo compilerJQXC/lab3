@@ -18,7 +18,7 @@
 
 enum symtype
 {
-	SYM_NULL,
+	SYM_NULL,//0
 	SYM_IDENTIFIER,
 	SYM_NUMBER,
 	SYM_PLUS,
@@ -28,7 +28,7 @@ enum symtype
 	SYM_ODD,
 	SYM_EQU,
 	SYM_NEQ,
-	SYM_LES,
+	SYM_LES,//10
 	SYM_LEQ,
 	SYM_GTR,
 	SYM_GEQ,
@@ -38,7 +38,7 @@ enum symtype
 	SYM_SEMICOLON,
 	SYM_PERIOD,
 	SYM_BECOMES,
-    SYM_BEGIN,
+    SYM_BEGIN,//20
 	SYM_END,
 	SYM_IF,
 	SYM_THEN,
@@ -48,7 +48,7 @@ enum symtype
 	SYM_CONST,
 	SYM_VAR,
 	SYM_PROCEDURE,
-	SYM_NOT,
+	SYM_NOT,//30
 	SYM_LEFTSPAREN,
 	SYM_RIGHTSPAREN,
 	SYM_ELSE,
@@ -69,12 +69,12 @@ enum symtype
 
 enum idtype
 {
-	ID_CONSTANT, ID_VARIABLE, ID_PROCEDURE
+	ID_CONSTANT, ID_VARIABLE, ID_PROCEDURE,ID_RETURN
 };
 
 enum opcode
 {
-	LIT, OPR, LOD, STO, CAL, INT, JMP, JPC
+	LIT, OPR, LOD, STO, CAL, INT, JMP, JPC,RET
 };
 
 enum oprcode
@@ -83,7 +83,7 @@ enum oprcode
 	OPR_MUL, OPR_DIV, OPR_ODD, OPR_EQU,
 	OPR_NEQ, OPR_LES, OPR_LEQ, OPR_GTR,
 	OPR_GEQ, OPR_AND, OPR_OR, OPR_NOT,   //9.30号添加了与 或 非操作
-	OPR_MOD, OPR_ANDBIT, OPR_ORBIT ,OPR_XOR     //10.9添加取模操作,按位与，按位或，异或
+	OPR_MOD, OPR_ANDBIT, OPR_ORBIT ,OPR_XOR   //10.9添加取模操作,按位与，按位或，异或
 };
 
 
@@ -176,10 +176,10 @@ char csym[NSYM + 1] =
 };
 /*9.19增加了 感叹号和两个中括号*/
 
-#define MAXINS   8
+#define MAXINS   9
 char* mnemonic[MAXINS] =
 {
-	"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP", "JPC"
+	"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP", "JPC","RET"
 };
 
 typedef struct
