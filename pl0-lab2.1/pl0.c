@@ -299,6 +299,8 @@ void enter(int kind)
 		mk->level = level;
 		break;
 	} // switch
+
+	printf("Message of var in table is : name = %s  level = %d  address = %d  \n",table[tx].name,mk->level,(int)(mk->address));
 } // enter
 
 void enterPara(char *idTemp,int kind)
@@ -317,10 +319,10 @@ void enterPara(char *idTemp,int kind)
 		case(ID_RETURN):
 			mk=(mask*) &table[tx];
 			mk->level = level;
-			printf("The pcount is %d ***************/n",pcount);
+			printf("The pcount is %d ***************  \n",pcount);
 			mk->address = pcount+1;
 	}
-	printf("Message of var in table is : name = %s  level = %d  address = %d",table[tx].name,mk->level,(int)(mk->address));
+	printf("Message of var in table is : name = %s  level = %d  address = %d  \n",table[tx].name,mk->level,(int)(mk->address));
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -459,7 +461,7 @@ void factor(symset fsys)
 	int i;
 	symset set;
 	
-	test(facbegsys, fsys, 24); // The symbol can not be as the beginning of an expression.
+	// test(facbegsys, fsys, 24); // The symbol can not be as the beginning of an expression.
 
 	while (inset(sym, facbegsys))
 	{
@@ -478,7 +480,6 @@ void factor(symset fsys)
 					{
 						procedureCall();
 						gen(CAL, level - mk->level, mk->address);
-						getsym();
 					}
 				}
 				else // normal variable
@@ -543,7 +544,7 @@ void factor(symset fsys)
 			//expression(fsys);
 			gen(OPR,0,OPR_NOT);  //NOT
 		}
-		test(fsys, createset(SYM_LPAREN, SYM_NULL), 23);
+		// test(fsys, createset(SYM_LPAREN, SYM_NULL), 23);
 	} // while
 } // factor
 
@@ -1073,7 +1074,7 @@ void block(symset fsys)
 				getsym();
 				set1 = createset(SYM_IDENTIFIER, SYM_PROCEDURE, SYM_NULL);
 				set = uniteset(statbegsys, set1);
-				test(set, fsys, 6);
+				// test(set, fsys, 6);
 				destroyset(set1);
 				destroyset(set);
 			}
@@ -1085,7 +1086,7 @@ void block(symset fsys)
 		dx = block_dx; //restore dx after handling procedure call!
 		set1 = createset(SYM_IDENTIFIER, SYM_NULL);
 		set = uniteset(statbegsys, set1);
-		test(set, declbegsys, 7);
+		// test(set, declbegsys, 7);
 		destroyset(set1);
 		destroyset(set);
 	}
@@ -1101,7 +1102,7 @@ void block(symset fsys)
 	destroyset(set1);
 	destroyset(set);
 	gen(OPR, 0, OPR_RET); // return
-	test(fsys, phi, 8); // test for error: Follow the statement is an incorrect symbol.
+	// test(fsys, phi, 8); // test for error: Follow the statement is an incorrect symbol.
 	listcode(cx0, cx);
 } // block
 
@@ -1239,6 +1240,7 @@ void interpret()
 			// generate new block mark
 			stack[top + 2] = b;
 			stack[top + 3] = pc;
+			printf("the pc is %d *****&&&&&&&&&&&&&&**\n",pc);
 			b = top + 1;
 			pc = i.a;
 			break;
@@ -1254,10 +1256,15 @@ void interpret()
 			top--;
 			break;
 		case RET:
-			stack[b-i.a]=stack[b-1];
-			top = b - i.a;
-			pc = stack[top + 3]; // address of next instruction
-			b = stack[top + 2];
+			stack[b+i.a]=stack[b-1];
+			pc = stack[b + 2];
+			printf("pc = %d ",pc);
+			int bTemp=b; // address of next instruction
+			b = stack[b + 1];
+			printf("b = %d ",b);
+			top=bTemp+i.a;
+			printf("top = %d \n",top);
+
 		} // switch
 	}
 	while (pc);
