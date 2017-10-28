@@ -1240,7 +1240,7 @@ void interpret()
 			// generate new block mark
 			stack[top + 2] = b;
 			stack[top + 3] = pc;
-			printf("the pc is %d *****&&&&&&&&&&&&&&**\n",pc);
+			// printf("the pc is %d *****&&&&&&&&&&&&&&**\n",pc);
 			b = top + 1;
 			pc = i.a;
 			break;
@@ -1258,12 +1258,12 @@ void interpret()
 		case RET:
 			stack[b+i.a]=stack[b-1];
 			pc = stack[b + 2];
-			printf("pc = %d ",pc);
+			// printf("pc = %d ",pc);
 			int bTemp=b; // address of next instruction
 			b = stack[b + 1];
-			printf("b = %d ",b);
+			// printf("b = %d ",b);
 			top=bTemp+i.a;
-			printf("top = %d \n",top);
+			// printf("top = %d \n",top);
 
 		} // switch
 	}

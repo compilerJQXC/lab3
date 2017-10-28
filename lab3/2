@@ -1,0 +1,11 @@
+var i;
+procedure q(n)
+var m;
+begin
+	m:=2+n;
+	return m;
+end;
+begin
+	i:=3;
+	i:=q(i);
+end.

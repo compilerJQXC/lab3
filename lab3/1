@@ -1,0 +1,20 @@
+var i;
+var j;
+var k;
+procedure q(n)
+var m;
+begin
+	m:=1;
+	if n=1 then return m;
+	if n=0 then return m;
+	if n>1 then 
+	begin
+		m:=n-1;
+		m:=n*q(m);
+		return m;
+	end;
+end;
+begin
+	i:=4;
+	i:=q(i);
+end.
