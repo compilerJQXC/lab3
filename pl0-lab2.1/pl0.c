@@ -469,42 +469,35 @@ void factor(symset fsys)
 			mask *mk=(mask *) &table[j];
 			if(j)
 			{
-				if(table[j].kind == ID_PROCEDURE)
+
+				if(table[j].kind == ID_PROCEDURE)//procedure Call
 				{
+					// printf("Is that correct? the ooxx is %s \n",table[j].name);
 					getsym();
 					if(sym == SYM_LPAREN)
 					{
-						gen(INT,0,1);
-						gen(CAL, level - mk->level, mk->address);
 						procedureCall();
-						mask* mk;
-						mk = (mask*) &table[i];
+						gen(CAL, level - mk->level, mk->address);
 						getsym();
 					}
 				}
-				else
+				else // normal variable
 				{
-					if ((i = position(id)) == 0)
-					{
-						error(11); // Undeclared identifier.
-					}
-					else
-					{
-						switch (table[i].kind)
+						// printf("Is that correct ? kind = %d \n",table[j].kind);
+						switch (table[j].kind)
 						{
 							mask* mk;
 							case ID_CONSTANT:
 							gen(LIT, 0, table[i].value);
 							break;
 						case ID_VARIABLE:
-							mk = (mask*) &table[i];
+							mk = (mask*) &table[j];
 							gen(LOD, level - mk->level, mk->address);
 							break;
 						case ID_PROCEDURE:
 							error(21); // Procedure identifier can not be in an expression.
 							break;
 						} // switch
-					}
 				}
 			}
 			getsym();
@@ -756,7 +749,7 @@ void statement(symset fsys)
 				{
 					expr_andbit(fsys);
 					mk = (mask*) &table[j];
-					gen(LOD, level - mk->level, mk->address);
+					// gen(LOD, level - mk->level, mk->address);
 					gen(STO,0,-1);
 					gen(RET,0,retOffset);
 				}
@@ -772,10 +765,9 @@ void statement(symset fsys)
 			error(11); // Undeclared identifier.
 		}
 		///****************1026*****************************
-		else if (table[i].kind != ID_VARIABLE)
+		else if (table[i].kind == ID_PROCEDURE)
 		{
 			mk = (mask*) &table[i];
-			if(table[i].kind == ID_PROCEDURE)printf("Hello World!!\n");
 			getsym();
 			if(sym == SYM_LPAREN)
 			{
@@ -802,6 +794,7 @@ void statement(symset fsys)
 				error(13); // ':=' expected.
 			}
 			expr_andbit(fsys);
+
 			//expression(fsys);
 			mk = (mask*) &table[i];
 			if (i)
@@ -1237,7 +1230,8 @@ void interpret()
 			break;
 		case STO: // store var on stack
 			stack[base(stack, b, i.l) + i.a] = stack[top];
-			printf("%d\n", stack[top]);
+			for(int k=0;k<25;k++)printf("%-2d ",stack[k]);
+				printf("\n");
 			top--;
 			break;
 		case CAL: 
