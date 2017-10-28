@@ -649,7 +649,7 @@ void condition(symset fsys)
 		//destroyset(set);
 		if (! inset(sym, relset))
 		{
-			error(20);
+			
 		}
 		else
 		{
@@ -858,21 +858,26 @@ void statement(symset fsys)
 		/***9.30修改下面这一句*/
 		destroyset(set1);
 		destroyset(set);
-		statement(fsys);
 
 		cx1 = cx;
 		gen(JPC, 0, 0);  
-		// if (sym == SYM_THEN)
-		// {
-		// 	getsym();
-		// }
-		// else
-		// {
-		// 	error(16); // 'then' expected.
-		// }
-		//conditions to jump,the place jump to is not sure now
 		statement(fsys);
-		code[cx1].a = cx;	
+		getsym();
+		code[cx1].a = cx+1;
+		cx1=cx;// else's beginning is a code that do not executing folllowing codes.
+		if( sym != SYM_ELSE )
+			gen(JMP,0,cx1+1);
+		else
+		{
+			getsym();
+			printf("asdsfsdjfsjdfjlskjfsj\n");
+			gen(JMP,0,0);
+			statement(fsys);
+			getsym();
+			code[cx1].a=cx;
+		}
+
+
 	}
 	else if (sym == SYM_BEGIN)
 	{ // block
