@@ -838,20 +838,39 @@ void statement(symset fsys)
 		getsym();
 		set1 = createset(SYM_THEN, SYM_DO, SYM_NULL);
 		set = uniteset(set1, fsys);
-		/***9.30修改下面这一句*/
-		conditions_or(set);  //if后面不在跟condition，而是跟conditions_or
-		destroyset(set1);
-		destroyset(set);
-		if (sym == SYM_THEN)
+		if(sym != SYM_LPAREN)
 		{
-			getsym();
+			printf("expect ( after if \n");
+			err++;
 		}
 		else
 		{
-			error(16); // 'then' expected.
+			getsym();
+			conditions_or(set); 
+			
+			if(sym != SYM_RPAREN)
+			{
+				printf("expect ) in if expression \n");
+				err++;
+			}
+			else getsym();
 		}
+		/***9.30修改下面这一句*/
+		destroyset(set1);
+		destroyset(set);
+		statement(fsys);
+
 		cx1 = cx;
-		gen(JPC, 0, 0);  //conditions to jump,the place jump to is not sure now
+		gen(JPC, 0, 0);  
+		// if (sym == SYM_THEN)
+		// {
+		// 	getsym();
+		// }
+		// else
+		// {
+		// 	error(16); // 'then' expected.
+		// }
+		//conditions to jump,the place jump to is not sure now
 		statement(fsys);
 		code[cx1].a = cx;	
 	}
