@@ -4,10 +4,11 @@ var k;
 procedure q(n)
 begin
 	n:=n-1;
-	if n==0 then return n;
-	q(n);
+	
+	return n;
 end;
 begin
 	i:=3;
-	i:=q(i);
+	if i==3 then i:=4;
+	
 end.
