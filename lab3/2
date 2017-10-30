@@ -2,12 +2,10 @@ var i;
 procedure q(n)
 begin
 	n:=n+1;
-	if(n=5)
-	return n;
+	if(n=4)return n;
 	else
 	begin
-		n:=q(n);
-		return n;
+		return q(n)+1;
 	end;
 end;
 begin

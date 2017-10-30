@@ -738,23 +738,26 @@ void statement(symset fsys)
 			}
 			
 			getsym();
-			if(sym != SYM_IDENTIFIER)
-			{
-				printf("Error in Return value!\n");
-			}
-			else
-			{
-				int j=position(id);
+			expr_andbit(fsys);
+			gen(STO,0,-1);
+			gen(RET,0,retOffset); //2017.10.30
+			// if(sym != SYM_IDENTIFIER)
+			// {
+			// 	printf("Error in Return value!\n");
+			// }
+			// else
+			// {
+			// 	int j=position(id);
 
-				if(j)
-				{
-					expr_andbit(fsys);
-					mk = (mask*) &table[j];
-					// gen(LOD, level - mk->level, mk->address);
-					gen(STO,0,-1);
-					gen(RET,0,retOffset);
-				}
-			}
+			// 	if(j)
+			// 	{
+			// 		expr_andbit(fsys);
+			// 		mk = (mask*) &table[j];
+			// 		// gen(LOD, level - mk->level, mk->address);
+			// 		gen(STO,0,-1);
+			// 		gen(RET,0,retOffset);
+			// 	}
+			// }
 	}
 	///*************************************************
 	if (sym == SYM_IDENTIFIER)
