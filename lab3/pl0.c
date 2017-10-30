@@ -462,7 +462,7 @@ void factor(symset fsys)
 	symset set;
 	
 	// test(facbegsys, fsys, 24); // The symbol can not be as the beginning of an expression.
-
+	// printf("the sym in factor is  *************   %d \n",sym);
 	while (inset(sym, facbegsys))
 	{
 		if (sym == SYM_IDENTIFIER)
@@ -773,7 +773,7 @@ void statement(symset fsys)
 			if(sym == SYM_LPAREN)
 			{
 				procedureCall();
-				gen(CAL, level - mk->level, mk->address);
+				gen(CAL, level, mk->address); // 2017.10.30 level - mk->level change to level
 				getsym();
 			}
 			else
@@ -1144,6 +1144,7 @@ int base(int stack[], int currentLevel, int levelDiff)
 // interprets and executes codes.
 void interpret()
 {
+	for(int i=0; i < cx; i++)printf("%d  %s\t%d\t%d\n",i,mnemonic[code[i].f], code[i].l, code[i].a);
 	int pc;        // program counter
 	int stack[STACKSIZE];
 	int top;       // top of stack
@@ -1155,6 +1156,7 @@ void interpret()
 	pc = 0;
 	b = 1;
 	top = 3;
+	for(int i=0;i<STACKSIZE;i++)stack[i]=0;
 	stack[1] = stack[2] = stack[3] = 0;
 	do
 	{
@@ -1257,6 +1259,8 @@ void interpret()
 			stack[base(stack, b, i.l) + i.a] = stack[top];
 			for(int k=0;k<25;k++)printf("%-2d ",stack[k]);
 				printf("\n");
+			// printf("%d\n",stack[top]);
+			// printf("the pc now is %d\n",pc);
 			top--;
 			break;
 		case CAL: 

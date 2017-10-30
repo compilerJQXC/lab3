@@ -12,7 +12,7 @@
 
 #define MAXSYM     30     // maximum number of symbols  
 
-#define STACKSIZE  1000   // maximum storage
+#define STACKSIZE  100   // maximum storage
 
 /*枚举变量和整型数组里面增加了项，相应的宏定义也做了修改*/
 

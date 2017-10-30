@@ -1,17 +1,16 @@
 var i;
 procedure q(n)
-var m;
 begin
-	return m;
-end;
-begin
-	i:=6;
-	if(0)
-	begin
-		i:=4;
-	end;
+	n:=n+1;
+	if(n=5)
+	return n;
 	else
 	begin
-		i:=5;
+		n:=q(n);
+		return n;
 	end;
+end;
+begin
+	i:=1;
+	i:=q(i);
 end.

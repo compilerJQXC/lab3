@@ -122,4 +122,15 @@ int inset(int elem, symset s)
 		return 0;
 } // inset
 
+void printset(symset s)
+{
+	while(s && s->elem)
+	{
+		printf("%d  ",s->elem);
+		s=s->next;
+	}
+	printf("\n");
+	return;
+}
+
 // EOF set.c
