@@ -1,14 +1,12 @@
-var i;
-procedure q(n)
+var result;
+procedure fact(n)
 begin
-	n:=n+1;
-	if(n=4)return n;
+	if(n=1)return 1;
 	else
 	begin
-		return q(n);
+		return n*fact(n-1);
 	end;
 end;
 begin
-	i:=1;
-	i:=q(i);
+	result:=fact(5);
 end.

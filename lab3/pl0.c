@@ -405,7 +405,7 @@ void procedureCall()
 	}
 	else if(sym == SYM_COMMA)
 	{
-		if(presym != SYM_IDENTIFIER)
+		if(presym != SYM_IDENTIFIER && presym != SYM_NUMBER)
 		{
 			printf("Error in procedureCall 2\n");
 			error(26);
@@ -418,7 +418,7 @@ void procedureCall()
 	}
 	else if(sym == SYM_RPAREN)
 	{
-		if(presym != SYM_IDENTIFIER && presym != SYM_LPAREN)
+		if(presym != SYM_IDENTIFIER && presym != SYM_LPAREN && presym != SYM_NUMBER)
 		{
 			printf("Error in procedureCall 3\n");
 			error(26);
@@ -446,7 +446,7 @@ void factor(symset fsys)
 	
 	// test(facbegsys, fsys, 24); // The symbol can not be as the beginning of an expression.
 	// printf("the sym in factor is  *************   %d \n",sym);
-	while (inset(sym, facbegsys))
+	while(inset(sym, facbegsys))
 	{
 		if (sym == SYM_IDENTIFIER)
 		{
@@ -492,6 +492,7 @@ void factor(symset fsys)
 				printf("Error : false in factor that Undeclared id\n");
 				getsym();
 			}
+			break;
 		}
 		else if (sym == SYM_NUMBER)
 		{
@@ -502,6 +503,7 @@ void factor(symset fsys)
 			}
 			gen(LIT, 0, num);
 			getsym();
+			break;
 		}
 		else if (sym == SYM_LPAREN)
 		{
@@ -1245,7 +1247,7 @@ void interpret()
 			break;
 		case STO: // store var on stack
 			stack[base(stack, b, i.l) + i.a] = stack[top];
-			for(int k=0;k<25;k++)printf("%-2d ",stack[k]);
+			for(int k=0;k<25;k++)printf("%-3d ",stack[k]);
 				printf("\n");
 			// printf("%d\n",stack[top]);
 			// printf("the pc now is %d\n",pc);
