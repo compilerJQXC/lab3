@@ -5,7 +5,7 @@ begin
 	if(n=4)return n;
 	else
 	begin
-		return q(n)+1;
+		return q(n);
 	end;
 end;
 begin

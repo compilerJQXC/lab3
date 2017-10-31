@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "set.h"
 
 #define NRW        16     // number of reserved words
 #define TXMAX      500    // length of identifier table
@@ -144,6 +145,7 @@ int  err;
 int  cx;         // index of current instruction to be generated.
 int  level = 0;
 int  tx = 0;
+int presym;
 
 char line[80];
 
@@ -202,3 +204,6 @@ typedef struct
 FILE* infile;
 
 // EOF PL0.h
+
+
+void expr_andbit(symset fsys);
