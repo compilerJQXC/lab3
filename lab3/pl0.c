@@ -326,6 +326,19 @@ void enterPara(char *idTemp,int kind)
 	// printf("Message of var in table is : name = %s  level = %d  address = %d  \n",table[tx].name,mk->level,(int)(mk->address));
 }
 
+void enterArray()
+{
+	mask *mk;
+	tx++;
+	strcpy(table[tx].name, id);
+	table[tx].kind = ID_ARRAY;
+	mk = (mask *)&table[tx];
+	mk->level = level;
+	mk->address = dx++;
+	mk -> arrayAdd =++adx;
+	arrayDim[adx]=0;
+}
+
 //////////////////////////////////////////////////////////////////////
 // locates identifier in symbol table.
 int position(char* id)
@@ -708,10 +721,74 @@ void conditions_or(symset fsys)
 /****************↑↑↑↑9.30号添加↑↑↑↑************************/
 
 
-//**********************1026*****************************
+void calAdd(int i)
+{
+	mask *mk=(mask *)&table[i];
+	int temp=mk->arrayAdd;
 
-
-//******************************************************
+	if(sym == SYM_LEFTSPAREN)
+	{
+		if(presym != SYM_IDENTIFIER && presym != SYM_RIGHTSPAREN)
+		{
+			printf("expected identifier or rightsparen after leftsparen\n");
+			err++;
+		}
+		else
+		{
+			getsym();
+			expr_andbit(statbegsys);
+			readDim++;
+			gen(OPR,0,2);
+			if(readDim == arrayDim[temp])
+			{
+				// gen(LODARR,0,mk->address); //LODARR undeclared!
+				getsym();
+				if(sym != SYM_RIGHTSPAREN)
+				{
+					printf("expected rightsparen after expression\n");
+					err++;
+					return;
+				}
+				else
+				{
+					getsym();
+				}
+				if(sym != SYM_SEMICOLON)
+				{
+					printf("expected semicolon after calling array\n");
+					err++;
+					return;
+				}
+				else
+				{
+					getsym();
+					return;
+				}
+			}
+			else
+			{
+				gen(LIT,0,arrayDim[temp+readDim+1]);
+				gen(OPR,0,OPR_MUL);
+				if(sym != SYM_RIGHTSPAREN)
+				{
+					printf("expected rightsparen after expression\n");
+					err++;
+					return;
+				}
+				else
+				{
+					getsym();
+					calAdd();
+				}
+			}
+		} //else
+	}
+	else
+	{
+		printf("expected leftsparen\n");
+		return;
+	}
+}
 
 void statement(symset fsys)
 {
@@ -765,8 +842,14 @@ void statement(symset fsys)
 				exit(0);
 			}
 		}
-		/////////******************************************
-		else
+		else if (table[i].kind == ID_ARRAY)
+		{
+			getsym();
+			gen(LIT,0,0);
+			readDim=0;
+			calAdd(i);
+		}
+		else //normal varible
 		{
 			getsym();
 			if (sym == SYM_BECOMES)
@@ -979,6 +1062,70 @@ void paraList()
 		error(26);
 	}
 }		
+
+void arrayDecl()
+{
+	if(presym == SYM_LEFTSPAREN)
+	{
+		if(sym != SYM_NUMBER)
+		{
+			printf("expected number when declare array.\n");
+			err++;
+			return;
+		}
+		else 	// sym == SYM_LEFTSPAREN
+		{
+			arrayDim[adx]++;
+			arrayDim[adx+arrayDim[adx]]=num;
+			getsym();
+		}
+		if(sym != SYM_RIGHTSPAREN)
+		{
+			printf("expected rightsparen here while declare array at dim %d\n",arrayDim[adx]);
+			err++;
+			return;
+		}
+		else
+		{
+			getsym();
+			arrayDecl();
+		}
+	}
+	else if(presym == SYM_RIGHTSPAREN)
+	{
+		if(sym == SYM_LEFTSPAREN)
+		{
+			getsym();
+			arrayDecl();
+		}
+		else if(sym == SYM_SEMICOLON)
+		{
+			int count=1;
+			for(int i=1;i<=arrayDim[adx];i++)
+			{
+				count*=arrayDim[adx+i];
+			}
+			dx+=count-1;
+			getsym();
+			return;
+		}
+		else
+		{
+			printf("expected ';' or '[' after ']'\n");
+			err++;
+			getsym();
+			return;
+		}
+	}
+	else
+	{
+		printf("expected '[' or ']'\n");
+		err++;
+		getsym();
+		return;
+	}
+}
+
 //////////////////////////////////////////////////////////////////////
 void block(symset fsys)
 {
@@ -1011,6 +1158,20 @@ void block(symset fsys)
 	}
 	do
 	{
+		if(sym == SYM_ARRAY)
+		{
+			getsym();
+			if(sym == SYM_IDENTIFIER)//SYM_LEFTSPAREN,SYM_RIGHTSPAREN,
+			{                            
+				enterArray();
+				getsym();
+				if(sym == SYM_LEFTSPAREN)
+				{
+					getsym();
+					arrayDecl();
+				}
+			}
+		}
 		if (sym == SYM_CONST)
 		{ // constant declarations
 			do
@@ -1276,13 +1437,11 @@ void interpret()
 		case RET:
 			stack[b+i.a]=stack[b-1];
 			pc = stack[b + 2];
-			// printf("pc = %d ",pc);
-			int bTemp=b; // address of next instruction
+			int bTemp=b;
 			b = stack[b + 1];
-			// printf("b = %d ",b);
 			top=bTemp+i.a;
-			// printf("top = %d \n",top);
-
+		case LODARR:
+			stack[top]=stack[b+stack[top]+i.a];
 		} // switch
 	}
 	while (pc);
@@ -1310,8 +1469,8 @@ void main ()
 	relset = createset(SYM_EQU, SYM_NEQ, SYM_LES, SYM_LEQ, SYM_GTR, SYM_GEQ, SYM_NULL);
 	
 	// create begin symbol sets
-	declbegsys = createset(SYM_CONST, SYM_VAR, SYM_PROCEDURE, SYM_NULL);
-	statbegsys = createset(SYM_BEGIN, SYM_CALL, SYM_IF, SYM_WHILE, SYM_NULL);
+	declbegsys = createset(SYM_CONST, SYM_VAR, SYM_PROCEDURE, SYM_ARRAY, SYM_NULL);
+	statbegsys = createset(SYM_BEGIN, SYM_CALL, SYM_IF, SYM_WHILE,SYM_RETURN, SYM_NULL);
 	/*************************9.30添加下面的SYM_NOT****************************/
 	facbegsys = createset(SYM_IDENTIFIER, SYM_NUMBER, SYM_LPAREN, SYM_MINUS, SYM_NOT,SYM_NULL);
 

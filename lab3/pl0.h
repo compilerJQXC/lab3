@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "set.h"
 
-#define NRW        16     // number of reserved words
+#define NRW        17     // number of reserved words
 #define TXMAX      500    // length of identifier table
 #define MAXNUMLEN  14     // maximum number of digits in numbers
 #define NSYM       17     // maximum number of symbols in array ssym and csym
@@ -13,7 +13,7 @@
 
 #define MAXSYM     30     // maximum number of symbols  
 
-#define STACKSIZE  100   // maximum storage
+#define STACKSIZE  1000   // maximum storage
 
 /*枚举变量和整型数组里面增加了项，相应的宏定义也做了修改*/
 
@@ -64,18 +64,19 @@ enum symtype
 	SYM_ANDBIT,  //&
 	SYM_ORBIT,  //|
 	SYM_XOR,  //^
-	SYM_MOD   //%
+	SYM_MOD,   //%
+	SYM_ARRAY
 };
 /*9.19增加了SYM_RETURN之后的几项*/
 
 enum idtype
 {
-	ID_CONSTANT, ID_VARIABLE, ID_PROCEDURE,ID_RETURN
+	ID_CONSTANT, ID_VARIABLE, ID_PROCEDURE,ID_RETURN,ID_ARRAY
 };
 
 enum opcode
 {
-	LIT, OPR, LOD, STO, CAL, INT, JMP, JPC,RET
+	LIT, OPR, LOD, STO, CAL, INT, JMP, JPC,RET,LODARR
 };
 
 enum oprcode
@@ -146,6 +147,8 @@ int  cx;         // index of current instruction to be generated.
 int  level = 0;
 int  tx = 0;
 int presym;
+int dimDecl=0;
+int readDim=0;
 
 char line[80];
 
@@ -155,13 +158,13 @@ char* word[NRW + 1] =
 {
 	"", /* place holder */
 	"begin", "call", "const", "do", "end","if",
-	"odd", "procedure", "then", "var", "while","else","elif","exit","return","for"
+	"odd", "procedure", "then", "var", "while","else","elif","exit","return","for","array"
 };
 
 int wsym[NRW + 1] =
 {
 	SYM_NULL, SYM_BEGIN, SYM_CALL, SYM_CONST, SYM_DO, SYM_END,
-	SYM_IF, SYM_ODD, SYM_PROCEDURE, SYM_THEN, SYM_VAR, SYM_WHILE,SYM_ELSE,SYM_ELIF,SYM_EXIT,SYM_RETURN,SYM_FOR
+	SYM_IF, SYM_ODD, SYM_PROCEDURE, SYM_THEN, SYM_VAR, SYM_WHILE,SYM_ELSE,SYM_ELIF,SYM_EXIT,SYM_RETURN,SYM_FOR,SYM_ARRAY
 };
 /*9.19增加SYM_RETURN 到 SYM_FOR两项*/
 
@@ -189,6 +192,7 @@ typedef struct
 	char name[MAXIDLEN + 1];
 	int  kind;
 	int  value;
+	int arrayAdd;
 } comtab;
 
 comtab table[TXMAX];
@@ -199,11 +203,14 @@ typedef struct
 	int   kind;
 	short level;
 	short address;
+	int arrayAdd;
 } mask;
 
 FILE* infile;
 
 // EOF PL0.h
+int arrayDim[1000];
+int adx=0;
 
 
 void expr_andbit(symset fsys);

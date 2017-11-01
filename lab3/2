@@ -1,12 +1,10 @@
 var result;
-procedure fact(n)
+array a[5][4];
+procedure fact()
 begin
-	if(n=1)return 1;
-	else
-	begin
-		return n*fact(n-1);
-	end;
+	result :=2;
+	return result;
 end;
 begin
-	result:=fact(5);
+	result:=fact();
 end.
