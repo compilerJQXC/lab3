@@ -215,3 +215,4 @@ int adx=0;
 
 void expr_andbit(symset fsys);
 void calAdd(int i);
+void arrayDecl();

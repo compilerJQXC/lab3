@@ -1,5 +1,4 @@
-var result;
-array a[2][3];
+var result,a[2][3],b;
 procedure fact(n)
 begin
 	if(n=1)return 1;
@@ -12,6 +11,7 @@ begin
 	result:=19;
 	a[0][0]:=5;
 	a[1][2]:=31;
+	b:=result;
 	result := a[0][0];
 	result :=fact(a[0][0]);
 end.

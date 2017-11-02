@@ -329,8 +329,7 @@ void enterPara(char *idTemp,int kind)
 void enterArray()
 {
 	mask *mk;
-	tx++;
-	strcpy(table[tx].name, id);
+	tx;
 	table[tx].kind = ID_ARRAY;
 	mk = (mask *)&table[tx];
 	mk->level = level;
@@ -382,14 +381,21 @@ void constdeclaration()
 //////////////////////////////////////////////////////////////////////
 void vardeclaration(void)
 {
-	if (sym == SYM_IDENTIFIER)
+	if(sym == SYM_IDENTIFIER)
 	{
 		enter(ID_VARIABLE);
 		getsym();
+		if(sym == SYM_LEFTSPAREN)
+		{
+			getsym();
+			enterArray();
+			arrayDecl();
+		}
 	}
 	else
 	{
-		error(4); // There must be an identifier to follow 'const', 'var', or 'procedure'.
+		printf("Error:expected SYM_IDENTIFIER in vardeclaration\n");
+		err++;
 	}
 } // vardeclaration
 
@@ -1107,7 +1113,7 @@ void arrayDecl()
 			getsym();
 			arrayDecl();
 		}
-		else if(sym == SYM_SEMICOLON)
+		else // ; or ,
 		{
 			int count=1;
 			for(int i=1;i<=arrayDim[adx];i++)
@@ -1115,14 +1121,6 @@ void arrayDecl()
 				count*=arrayDim[adx+i];
 			}
 			dx+=count-1;
-			getsym();
-			return;
-		}
-		else
-		{
-			printf("expected ';' or '[' after ']'\n");
-			err++;
-			getsym();
 			return;
 		}
 	}
