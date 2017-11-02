@@ -1,11 +1,17 @@
 var result;
-array a[5][4];
-procedure fact()
+array a[2][3];
+procedure fact(n)
 begin
-	result :=2;
-	return result;
+	if(n=1)return 1;
+	else 
+	begin
+		return n*fact(n-1);
+	end;
 end;
 begin
+	result:=19;
+	a[0][0]:=5;
 	a[1][2]:=31;
-	result:=fact();
+	result := a[0][0];
+	result :=fact(a[0][0]);
 end.

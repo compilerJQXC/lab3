@@ -181,10 +181,10 @@ char csym[NSYM + 1] =
 };
 /*9.19增加了 感叹号和两个中括号*/
 
-#define MAXINS   9
+#define MAXINS   11
 char* mnemonic[MAXINS] =
 {
-	"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP", "JPC","RET"
+	"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP", "JPC","RET","LODARR","STOARR"
 };
 
 typedef struct
@@ -214,3 +214,4 @@ int adx=0;
 
 
 void expr_andbit(symset fsys);
+void calAdd(int i);

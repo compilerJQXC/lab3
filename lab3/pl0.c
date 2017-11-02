@@ -431,7 +431,7 @@ void procedureCall()
 	}
 	else if(sym == SYM_RPAREN)
 	{
-		if(presym != SYM_IDENTIFIER && presym != SYM_LPAREN && presym != SYM_NUMBER)
+		if(presym != SYM_IDENTIFIER && presym != SYM_LPAREN && presym != SYM_NUMBER && presym != SYM_RIGHTSPAREN)
 		{
 			printf("Error in procedureCall 3\n");
 			error(26);
@@ -480,8 +480,15 @@ void factor(symset fsys)
 					}
 				}
 				//**********20171102************
-
-
+				else if(table[j].kind == ID_ARRAY)
+				{
+					getsym();
+					gen(LIT,0,0);
+					readDim=0;
+					calAdd(j);
+					gen(LODARR,level- mk->level,mk->address);
+					printf("the mk -> address is %d\n",sym);
+				}
 				//******************************
 				else // normal variable
 				{
@@ -848,6 +855,10 @@ void statement(symset fsys)
 				expr_andbit(fsys);
 				gen(STOARR,level-mk->level,mk->address);
 			}
+			else
+			{
+				error(13); // ':=' expected.
+			}
 		}
 		else // table[i].kind == ID_VARIABLE
 		{
@@ -861,8 +872,6 @@ void statement(symset fsys)
 				error(13); // ':=' expected.
 			}
 			expr_andbit(fsys);
-
-			//expression(fsys);
 			mk = (mask*) &table[i];
 			if (i)
 			{
@@ -1408,7 +1417,7 @@ void interpret()
 			break;
 		case STO: // store var on stack
 			stack[base(stack, b, i.l) + i.a] = stack[top];
-			for(int k=0;k<25;k++)printf("%-3d ",stack[k]);
+			for(int k=0;k<39;k++)printf("%-3d ",stack[k]);
 				printf("\n");
 			// printf("%d\n",stack[top]);
 			// printf("the pc now is %d\n",pc);
@@ -1440,11 +1449,20 @@ void interpret()
 			int bTemp=b;
 			b = stack[b + 1];
 			top=bTemp+i.a;
+			break;
 		case LODARR:
-			stack[top]=stack[b+stack[top]+i.a];
+			stack[top] = stack[base(stack, b, i.l) + i.a + stack[top]];
+			for(int k=0;k<39;k++)printf("%-3d ",stack[k]);
+				printf("\n");
+			printf("top = %d  (lodarr)\n",top );
+			break;
 		case STOARR:
 			stack[base(stack, b, i.l) + i.a + stack[top-1]] = stack[top];
-			stack[top-1]=stack[top--];
+			top-=2;
+			for(int k=0;k<39;k++)printf("%-3d ",stack[k]);
+				printf("\n");
+			printf("top = %d\n",top );
+			break;
 		} // switch
 	}
 	while (pc);
