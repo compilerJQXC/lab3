@@ -8,9 +8,9 @@ begin
 	end;
 end;
 begin
-	result:=19;
+	result:=1;
 	a[0][0]:=5;
-	a[1][2]:=31;
+	a[result][2]:=31;
 	b:=result;
 	result := a[0][0];
 	result :=fact(a[0][0]);
