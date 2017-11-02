@@ -479,6 +479,10 @@ void factor(symset fsys)
 						gen(CAL, level - mk->level, mk->address);
 					}
 				}
+				//**********20171102************
+
+
+				//******************************
 				else // normal variable
 				{
 						// printf("Is that correct ? kind = %d \n",table[j].kind);
@@ -742,20 +746,9 @@ void calAdd(int i)
 			if(readDim == arrayDim[temp])
 			{
 				// gen(LODARR,0,mk->address); //LODARR undeclared!
-				getsym();
 				if(sym != SYM_RIGHTSPAREN)
 				{
 					printf("expected rightsparen after expression\n");
-					err++;
-					return;
-				}
-				else
-				{
-					getsym();
-				}
-				if(sym != SYM_SEMICOLON)
-				{
-					printf("expected semicolon after calling array\n");
 					err++;
 					return;
 				}
@@ -778,7 +771,7 @@ void calAdd(int i)
 				else
 				{
 					getsym();
-					calAdd();
+					calAdd(i);
 				}
 			}
 		} //else
@@ -848,8 +841,15 @@ void statement(symset fsys)
 			gen(LIT,0,0);
 			readDim=0;
 			calAdd(i);
+			mk = (mask*) &table[i];
+			if(sym == SYM_BECOMES)
+			{
+				getsym();
+				expr_andbit(fsys);
+				gen(STOARR,level-mk->level,mk->address);
+			}
 		}
-		else //normal varible
+		else // table[i].kind == ID_VARIABLE
 		{
 			getsym();
 			if (sym == SYM_BECOMES)
@@ -1442,6 +1442,9 @@ void interpret()
 			top=bTemp+i.a;
 		case LODARR:
 			stack[top]=stack[b+stack[top]+i.a];
+		case STOARR:
+			stack[base(stack, b, i.l) + i.a + stack[top-1]] = stack[top];
+			stack[top-1]=stack[top--];
 		} // switch
 	}
 	while (pc);

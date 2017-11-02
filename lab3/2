@@ -6,5 +6,6 @@ begin
 	return result;
 end;
 begin
+	a[1][2]:=31;
 	result:=fact();
 end.
