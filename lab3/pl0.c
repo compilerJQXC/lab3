@@ -28,12 +28,9 @@ void error(int n)
 //////////////////////////////////////////////////////////////////////
 void getch(void)
 {
-	if (cc == ll)//cc是"character count"。在pl0.h_120有定义。
-	/*
-		读取文件中的一行字符串，存放在字符数组line[]中。从Line[1]开始存储。换行在line[]中用空格表示。
-	*/
+	if (cc == ll)
 	{
-		if (feof(infile))//infile是文件指针类型FILE *，在pl0.h_179中有定义。这里使用feof()是为了检测文件是二进制文件还是文本文件。
+		if (feof(infile))
 		{
 			printf("\nPROGRAM INCOMPLETE\n");
 			exit(1);
@@ -47,7 +44,7 @@ void getch(void)
 			line[++ll] = ch;
 		} // while
 		printf("\n");
-		line[++ll] = ' ';// ' ' in place of  '\n'
+		line[++ll] = '\n';
 	}
 	ch = line[++cc];//将line[1]中的元素赋值给ch。
 } // getch
@@ -141,13 +138,11 @@ void getsym(void)
 			sym = SYM_LES;     // <
 		}
 	}
-	//****10.19
 	else if (ch == '^')
 	{
 		sym = SYM_XOR;
 		getch();
 	}
-	//**********
 	else if (ch == '/')
 	{
 		getch();
@@ -179,7 +174,6 @@ void getsym(void)
 			sym = ssym[4];
 		}
 	}
-	// ************************9.19增加了下面这个else if语句块*****************************
 	else if(ch == '&')
 	{
 		getch();
@@ -205,8 +199,7 @@ void getsym(void)
 		{
 			sym = SYM_ORBIT;
 		}
-	}	
-	// ************************---------------------------*****************************/							
+	}							
 	else
 	{ // other tokens
 		i = NSYM;  
@@ -216,7 +209,6 @@ void getsym(void)
 		{
 			sym = ssym[i];
 			getch();
-	// *****************************9.19 增加了下面的语句块 用来判断 ++ 和 -- *************************/
 			if( sym==SYM_PLUS   &&  ch=='+')
 			{
 				sym=SYM_DPLUS;
@@ -227,7 +219,6 @@ void getsym(void)
 				sym=SYM_DMINUS;
 				getch();
 			}
-	// * ****************************-------------------------------------*************************/
 		}
 		else  //不是其中一个，无法识别的符号
 		{
@@ -238,7 +229,6 @@ void getsym(void)
 	}
 } // getsym
 
-//////////////////////////////////////////////////////////////////////
 // generates (assembles) an instruction.
 void gen(int x, int y, int z)
 {
@@ -252,7 +242,6 @@ void gen(int x, int y, int z)
 	code[cx++].a = z;
 } // gen
 
-//////////////////////////////////////////////////////////////////////
 // tests if error occurs and skips all symbols that do not belongs to s1 or s2.
 void test(symset s1, symset s2, int n)
 {
@@ -437,7 +426,7 @@ void procedureCall()
 	}
 	else if(sym == SYM_RPAREN)
 	{
-		if(presym != SYM_IDENTIFIER && presym != SYM_LPAREN && presym != SYM_NUMBER && presym != SYM_RIGHTSPAREN)
+		if(presym != SYM_IDENTIFIER && presym != SYM_LPAREN && presym != SYM_NUMBER && presym != SYM_RIGHTSPAREN && presym != SYM_RPAREN)
 		{
 			printf("Error in procedureCall 3\n");
 			error(26);
@@ -493,7 +482,6 @@ void factor(symset fsys)
 					readDim=0;
 					calAdd(j);
 					gen(LODARR,level- mk->level,mk->address);
-					printf("the mk -> address is %d\n",sym);
 				}
 				//******************************
 				else // normal variable
@@ -503,7 +491,8 @@ void factor(symset fsys)
 						{
 							mask* mk;
 							case ID_CONSTANT:
-							gen(LIT, 0, table[i].value);
+
+							gen(LIT, 0, table[j].value);
 							break;
 						case ID_VARIABLE:
 							mk = (mask*) &table[j];
@@ -578,7 +567,7 @@ void term(symset fsys)
 	//****************10.9添加SYM_MOD***********************
 	set = uniteset(fsys, createset(SYM_TIMES, SYM_SLASH,SYM_MOD,SYM_XOR,SYM_NULL));
 	factor(set);
-	while (sym == SYM_TIMES || sym == SYM_SLASH || sym == SYM_MOD || sym == SYM_XOR)  //乘除模
+	while (sym == SYM_TIMES || sym == SYM_SLASH || sym == SYM_MOD || sym == SYM_XOR)  //'*' '/' '%' '^'
 	{
 		mulop = sym;
 		getsym();
@@ -612,7 +601,7 @@ void expression(symset fsys)
 	set = uniteset(fsys, createset(SYM_PLUS, SYM_MINUS, SYM_NULL));
 	
 	term(set);
-	while (sym == SYM_PLUS || sym == SYM_MINUS)
+	while (sym == SYM_PLUS || sym == SYM_MINUS) // '+' '-'
 	{
 		addop = sym;
 		getsym();
@@ -640,7 +629,7 @@ void expr_andbit(symset fsys)
 	
 	expression(set);
 	//term(set);
-	while (sym == SYM_ANDBIT)
+	while (sym == SYM_ANDBIT)  // &
 	{
 		getsym();
 		expression(set);
@@ -887,7 +876,7 @@ void statement(symset fsys)
 		}
 	}
 	
-	else if (sym == SYM_CALL)
+	/*else if (sym == SYM_CALL)
 	{ // procedure call
 		getsym();
 		if (sym != SYM_IDENTIFIER)
@@ -912,7 +901,145 @@ void statement(symset fsys)
 			}
 			getsym();
 		}
-	} 
+	} */
+
+	else if (sym == SYM_FOR)
+	{
+		int CTrue,CFalse,ENextAdd,SNextAdd;
+		getsym();
+		if(sym != SYM_LPAREN)
+		{
+			printf("expected '(' after for declaration\n");
+			err++;
+		}
+		else
+		{
+			getsym();
+			if(sym != SYM_IDENTIFIER)
+			{
+				printf("expected identifier in the first field of for declaration\n");
+				err++;
+			}
+			else  // E1
+			{
+				int i=position(id);
+				mask *mk = (mask *)&table[i];
+				if(i)
+				{
+					if(table[i].kind == ID_VARIABLE)
+					{
+						getsym();
+						if(sym == SYM_BECOMES)
+						{
+							getsym();
+							expr_andbit(fsys);
+							gen(STO,level-mk->level,mk->address);
+						}
+					}
+					else // table[i].kind == ID_ARRAY
+					{
+						getsym();
+						gen(LIT,0,0);
+						readDim=0;
+						calAdd(i);
+						if(sym == SYM_BECOMES)
+						{
+							getsym();
+							expr_andbit(fsys);
+							gen(STOARR,level-mk->level,mk->address);
+						}
+					}
+				}
+				else
+				{
+					printf("Identifier undeclared!\n");
+					err++;
+				}
+			}
+			if(sym != SYM_SEMICOLON)
+			{
+				printf("expected ';' after the first field in for statement\n");
+				err++;
+			}
+			else
+			{
+				ENextAdd=cx;
+				getsym();
+				condition(fsys);
+
+				CTrue=cx;
+				gen(JPN,0,0);
+				CFalse=cx;
+				gen(JPC,0,0);
+				SNextAdd=cx;
+			}
+			if(sym != SYM_SEMICOLON)
+			{
+				printf("expected ';' after the second field in for statement\n");
+				err++;
+			}
+			else
+			{
+				getsym();
+				if(sym != SYM_IDENTIFIER)
+				{
+					printf("expected identifier in the first field of for declaration\n");
+					err++;
+				}
+				else
+				{
+					int i=position(id);
+					mask *mk = (mask *)&table[i];
+					if(i)
+					{
+						if(table[i].kind == ID_VARIABLE)
+						{
+							getsym();
+							if(sym == SYM_BECOMES)
+							{
+								getsym();
+								expr_andbit(fsys);
+								gen(STO,level-mk->level,mk->address);
+							}
+						}
+						else // table[i].kind == ID_ARRAY
+						{
+							getsym();
+							gen(LIT,0,0);
+							readDim=0;
+							calAdd(i);
+							mk = (mask*) &table[i];
+							if(sym == SYM_BECOMES)
+							{
+								getsym();
+								expr_andbit(fsys);
+								gen(STOARR,level-mk->level,mk->address);
+							}
+						}
+						gen(JMP,0,ENextAdd);
+						code[CTrue].a=cx;
+					}
+					else
+					{
+						printf("Identifier undeclared!\n");
+						err++;
+					}
+				}
+			}
+			if(sym != SYM_RPAREN)
+			{
+				printf("expected SYM_RPAREN\n");
+				err++;
+			}
+			else
+			{
+				getsym();
+				statement(fsys);
+			}
+			gen(JMP,0,SNextAdd);
+			code[CFalse].a=cx;
+		}
+	}
 	
 	else if (sym == SYM_IF)
 	{ // if statement
@@ -1285,7 +1412,7 @@ void block(symset fsys)
 	destroyset(set);
 	gen(OPR, 0, OPR_RET); // return
 	// test(fsys, phi, 8); // test for error: Follow the statement is an incorrect symbol.
-	listcode(cx0, cx);
+	// listcode(cx0, cx);
 } // block
 
 //////////////////////////////////////////////////////////////////////
@@ -1302,7 +1429,7 @@ int base(int stack[], int currentLevel, int levelDiff)
 // interprets and executes codes.
 void interpret()
 {
-	for(int i=0; i < cx; i++)printf("%d  %s\t%d\t%d\n",i,mnemonic[code[i].f], code[i].l, code[i].a);
+	listcode(0,cx);
 	int pc;        // program counter
 	int stack[STACKSIZE];
 	int top;       // top of stack
@@ -1415,9 +1542,9 @@ void interpret()
 			break;
 		case STO: // store var on stack
 			stack[base(stack, b, i.l) + i.a] = stack[top];
-			for(int k=0;k<39;k++)printf("%-3d ",stack[k]);
-				printf("\n");
-			// printf("%d\n",stack[top]);
+			// for(int k=0;k<39;k++)printf("%-3d ",stack[k]);
+			// 	printf("\n");
+			printf("%d\n",stack[top]);
 			// printf("the pc now is %d\n",pc);
 			top--;
 			break;
@@ -1441,6 +1568,11 @@ void interpret()
 				pc = i.a;
 			top--;
 			break;
+		case JPN:
+			if (stack[top] == 1)
+				pc = i.a;
+			top--;
+			break;
 		case RET:
 			stack[b+i.a]=stack[b-1];
 			pc = stack[b + 2];
@@ -1450,16 +1582,15 @@ void interpret()
 			break;
 		case LODARR:
 			stack[top] = stack[base(stack, b, i.l) + i.a + stack[top]];
-			for(int k=0;k<39;k++)printf("%-3d ",stack[k]);
-				printf("\n");
-			printf("top = %d  (lodarr)\n",top );
+			// for(int k=0;k<39;k++)printf("%-3d ",stack[k]);
+			// 	printf("\n");
 			break;
 		case STOARR:
 			stack[base(stack, b, i.l) + i.a + stack[top-1]] = stack[top];
+			// for(int k=0;k<39;k++)printf("%-3d ",stack[k]);
+			// 	printf("\n");
+			printf("%d\n",stack[top]);
 			top-=2;
-			for(int k=0;k<39;k++)printf("%-3d ",stack[k]);
-				printf("\n");
-			printf("top = %d\n",top );
 			break;
 		} // switch
 	}
@@ -1525,7 +1656,7 @@ void main ()
 		interpret();
 	else
 		printf("There are %d error(s) in PL/0 program.\n", err);
-	listcode(0, cx);
+	// listcode(0, cx);
 } // main
 
 //////////////////////////////////////////////////////////////////////

@@ -1,20 +1,8 @@
-var i;
-var j;
-var k;
-procedure q(n)
-var m;
+var i,result;
+const j=1;
 begin
-	m:=1;
-	if n=1 then return m;
-	if n=0 then return m;
-	if n>1 then 
+	for(i :=1 ;i<10;i:=i+1)
 	begin
-		m:=n-1;
-		m:=n*q(m);
-		return m;
+		result:=11;
 	end;
-end;
-begin
-	i:=4;
-	i:=q(i);
 end.

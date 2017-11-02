@@ -1,17 +1,40 @@
-var result,a[2][3],b;
+/*
+Last modified: 2017-11-20 14:21
+*/
+
+var result,a[2][3],b,i,k,l;
+const myconst=3;
 procedure fact(n)
 begin
-	if(n=1)return 1;
+	if(n=1 || n=0)return 1;
 	else 
 	begin
 		return n*fact(n-1);
 	end;
 end;
+
+procedure func()
 begin
+	result:=1314;
+	return fact(5);	//call function within a function
+end;
+
+procedure func2()
+begin
+	return 3;
+end;
+
+begin
+	i:=2;	//assignment
 	result:=1;
-	a[0][0]:=5;
-	a[result][2]:=31;
+	result:=result && 1;
+	i:=i & result;	//and_bit
+	i:=i+myconst;	//plus const
+	a[0][0]:=5;	//assign to array member
+	a[result][2]:=31; //use variable as array index
 	b:=result;
 	result := a[0][0];
 	result :=fact(a[0][0]);
+	func();
+	result:=fact(func2()); //passing function as argument
 end.

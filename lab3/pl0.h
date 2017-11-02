@@ -76,7 +76,7 @@ enum idtype
 
 enum opcode
 {
-	LIT, OPR, LOD, STO, CAL, INT, JMP, JPC,RET,LODARR,STOARR
+	LIT, OPR, LOD, STO, CAL, INT, JMP, JPC,RET,LODARR,STOARR,JPN
 };
 
 enum oprcode
@@ -172,12 +172,12 @@ int ssym[NSYM + 1] =
 {
 	SYM_NULL, SYM_PLUS, SYM_MINUS, SYM_TIMES, SYM_SLASH,
 	SYM_LPAREN, SYM_RPAREN, SYM_EQU, SYM_COMMA, SYM_PERIOD, SYM_SEMICOLON,SYM_NOT,SYM_LEFTSPAREN,SYM_RIGHTSPAREN,
-	SYM_XOR,SYM_MOD
+	SYM_XOR,SYM_MOD,SYM_ANDBIT
 };
 
 char csym[NSYM + 1] =
 {
-	' ', '+', '-', '*', '/', '(', ')', '=', ',', '.', ';','!','[',']','^','%'
+	' ', '+', '-', '*', '/', '(', ')', '=', ',', '.', ';','!','[',']','^','%','&'
 };
 /*9.19增加了 感叹号和两个中括号*/
 
@@ -191,8 +191,9 @@ typedef struct
 {
 	char name[MAXIDLEN + 1];
 	int  kind;
-	int  value;
 	int arrayAdd;
+	int  value;
+
 } comtab;
 
 comtab table[TXMAX];
@@ -201,9 +202,9 @@ typedef struct
 {
 	char  name[MAXIDLEN + 1];
 	int   kind;
+	int arrayAdd;
 	short level;
 	short address;
-	int arrayAdd;
 } mask;
 
 FILE* infile;
