@@ -905,7 +905,9 @@ void statement(symset fsys)
 
 	else if (sym == SYM_FOR)
 	{
-		int CTrue,CFalse,ENextAdd,SNextAdd;
+		instruction codeTemp[100];
+		int cxTemp,tempCodeCount;
+		int CFalseAdd,ENext;
 		getsym();
 		if(sym != SYM_LPAREN)
 		{
@@ -961,25 +963,22 @@ void statement(symset fsys)
 				printf("expected ';' after the first field in for statement\n");
 				err++;
 			}
-			else
+			else  // Condition
 			{
-				ENextAdd=cx;
+				ENext=cx;
 				getsym();
 				condition(fsys);
-
-				CTrue=cx;
-				gen(JPN,0,0);
-				CFalse=cx;
+				CFalseAdd=cx;
 				gen(JPC,0,0);
-				SNextAdd=cx;
 			}
 			if(sym != SYM_SEMICOLON)
 			{
 				printf("expected ';' after the second field in for statement\n");
 				err++;
 			}
-			else
+			else  // E2
 			{
+				cxTemp=cx;
 				getsym();
 				if(sym != SYM_IDENTIFIER)
 				{
@@ -1016,8 +1015,6 @@ void statement(symset fsys)
 								gen(STOARR,level-mk->level,mk->address);
 							}
 						}
-						gen(JMP,0,ENextAdd);
-						code[CTrue].a=cx;
 					}
 					else
 					{
@@ -1025,19 +1022,33 @@ void statement(symset fsys)
 						err++;
 					}
 				}
+				tempCodeCount=cx - cxTemp ;
+				for(int j=0;j<tempCodeCount;j++)
+				{
+					codeTemp[j].f=code[cxTemp+j].f;
+					codeTemp[j].l=code[cxTemp+j].l;
+					codeTemp[j].a=code[cxTemp+j].a;
+				}
+				cx=cxTemp;
 			}
 			if(sym != SYM_RPAREN)
 			{
 				printf("expected SYM_RPAREN\n");
 				err++;
 			}
-			else
+			else // body
 			{
 				getsym();
 				statement(fsys);
+				for(int i=0;i<tempCodeCount;i++)
+				{
+					code[cx].f=codeTemp[i].f;
+					code[cx].l=codeTemp[i].l;
+					code[cx++].a=codeTemp[i].a;
+				}
+				gen(JMP,0,ENext);
+				code[CFalseAdd].a=cx;
 			}
-			gen(JMP,0,SNextAdd);
-			code[CFalse].a=cx;
 		}
 	}
 	
@@ -1383,7 +1394,7 @@ void block(symset fsys)
 				getsym();
 				set1 = createset(SYM_IDENTIFIER, SYM_PROCEDURE, SYM_NULL);
 				set = uniteset(statbegsys, set1);
-				// test(set, fsys, 6);
+				// test(set, fsys, 6); 
 				destroyset(set1);
 				destroyset(set);
 			}
@@ -1440,7 +1451,7 @@ void interpret()
 
 	pc = 0;
 	b = 1;
-	top = 3;
+	top = 0;
 	for(int i=0;i<STACKSIZE;i++)stack[i]=0;
 	stack[1] = stack[2] = stack[3] = 0;
 	do
@@ -1542,8 +1553,8 @@ void interpret()
 			break;
 		case STO: // store var on stack
 			stack[base(stack, b, i.l) + i.a] = stack[top];
-			// for(int k=0;k<39;k++)printf("%-3d ",stack[k]);
-			// 	printf("\n");
+			// for(int k=0;k<20;k++)printf("%-3d ",stack[k]);
+			// printf("\n");
 			printf("%d\n",stack[top]);
 			// printf("the pc now is %d\n",pc);
 			top--;
@@ -1581,14 +1592,14 @@ void interpret()
 			top=bTemp+i.a;
 			break;
 		case LODARR:
-			stack[top] = stack[base(stack, b, i.l) + i.a + stack[top]];
-			// for(int k=0;k<39;k++)printf("%-3d ",stack[k]);
-			// 	printf("\n");
+			// stack[top] = stack[base(stack, b, i.l) + i.a + stack[top]];
+			// for(int k=0;k<20;k++)printf("%-3d ",stack[k]);
+			printf("\n");
 			break;
 		case STOARR:
 			stack[base(stack, b, i.l) + i.a + stack[top-1]] = stack[top];
-			// for(int k=0;k<39;k++)printf("%-3d ",stack[k]);
-			// 	printf("\n");
+			// for(int k=0;k<20;k++)printf("%-3d ",stack[k]);
+			// printf("\n");
 			printf("%d\n",stack[top]);
 			top-=2;
 			break;
