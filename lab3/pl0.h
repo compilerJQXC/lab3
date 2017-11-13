@@ -59,8 +59,8 @@ enum symtype
 	SYM_FOR,
 	SYM_AND, //&&
 	SYM_OR,  //||
-	SYM_DPLUS,
-	SYM_DMINUS,
+	SYM_INC,
+	SYM_DEC,
 	SYM_ANDBIT,  //&
 	SYM_ORBIT,  //|
 	SYM_XOR,  //^

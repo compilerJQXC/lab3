@@ -211,12 +211,12 @@ void getsym(void)
 			getch();
 			if( sym==SYM_PLUS   &&  ch=='+')
 			{
-				sym=SYM_DPLUS;
+				sym=SYM_INC;
 				getch();
 			}
 			else if(sym == SYM_MINUS && ch == '-')
 			{
-				sym=SYM_DMINUS;
+				sym=SYM_DEC;
 				getch();
 			}
 		}
@@ -487,11 +487,10 @@ void factor(symset fsys)
 				else // normal variable
 				{
 						// printf("Is that correct ? kind = %d \n",table[j].kind);
-						switch (table[j].kind)
-						{
-							mask* mk;
-							case ID_CONSTANT:
-
+					switch (table[j].kind)
+					{
+						mask* mk;
+						case ID_CONSTANT:
 							gen(LIT, 0, table[j].value);
 							break;
 						case ID_VARIABLE:
@@ -501,8 +500,25 @@ void factor(symset fsys)
 						case ID_PROCEDURE:
 							error(21); // Procedure identifier can not be in an expression.
 							break;
-						} // switch
+					} // switch
+					getsym();
+					if(sym == SYM_INC)
+					{
+						printf("target in SYM_INC\n");
+						gen(LOD, level-mk->level, mk->address);
+						gen(LIT, 0, 1);
+						gen(OPR, 0, OPR_ADD);
+						gen(STO, level -mk->level, mk->address);
 						getsym();
+					}
+					else if(sym == SYM_DEC)
+					{
+						gen(LOD, level-mk->level, mk->address);
+						gen(LIT, 0, 1);
+						gen(OPR, 0, OPR_MIN);
+						gen(STO, level -mk->level, mk->address);
+						getsym();
+					}
 						// printf("After return q(n the sym is : %d\n",sym);
 				}
 			}
@@ -554,6 +570,50 @@ void factor(symset fsys)
 			expr_andbit(fsys);
 			//expression(fsys);
 			gen(OPR,0,OPR_NOT);  //NOT
+		}
+		else if(sym == SYM_INC)
+		{
+			getsym();
+			if(sym != SYM_IDENTIFIER)
+			{
+				printf("expected id here \n");
+				err++;
+				getsym();
+			}
+			else
+			{
+				int i=position(id);
+				mask *mk=(mask *)&table[i];
+				gen(LOD, level-mk->level, mk->address);
+				gen(LIT, 0 ,1);
+				gen(OPR, 0, OPR_ADD);
+				gen(STO, level-mk->level, mk->address);
+				gen(LOD, level-mk->level, mk->address);
+				getsym();
+			}
+			break;
+		}
+		else if(sym == SYM_DEC)
+		{
+			getsym();
+			if(sym != SYM_IDENTIFIER)
+			{
+				printf("expected id here \n");
+				err++;
+				getsym();
+			}
+			else
+			{
+				int i=position(id);
+				mask *mk=(mask *)&table[i];
+				gen(LOD, level-mk->level, mk->address);
+				gen(LIT, 0 ,1);
+				gen(OPR, 0, OPR_MIN);
+				gen(STO, level-mk->level, mk->address);
+				gen(LOD, level-mk->level, mk->address);
+				getsym();
+			}
+			break;
 		}
 		// test(fsys, createset(SYM_LPAREN, SYM_NULL), 23);
 	} // while
@@ -980,10 +1040,14 @@ void statement(symset fsys)
 			{
 				cxTemp=cx;
 				getsym();
-				if(sym != SYM_IDENTIFIER)
+				if(sym != SYM_IDENTIFIER && sym != SYM_DEC && sym != SYM_INC)
 				{
 					printf("expected identifier in the first field of for declaration\n");
 					err++;
+				}
+				if(sym == SYM_INC)
+				{
+					//
 				}
 				else
 				{
@@ -999,6 +1063,23 @@ void statement(symset fsys)
 								getsym();
 								expr_andbit(fsys);
 								gen(STO,level-mk->level,mk->address);
+							}
+							if(sym == SYM_INC)
+							{
+						
+								gen(LOD, level-mk->level, mk->address);
+								gen(LIT, 0, 1);
+								gen(OPR, 0, OPR_ADD);
+								gen(STO, level -mk->level, mk->address);
+								getsym();
+							}
+							else if(sym == SYM_DEC)
+							{
+								gen(LOD, level-mk->level, mk->address);
+								gen(LIT, 0, 1);
+								gen(OPR, 0, OPR_MIN);
+								gen(STO, level -mk->level, mk->address);
+								getsym();
 							}
 						}
 						else // table[i].kind == ID_ARRAY

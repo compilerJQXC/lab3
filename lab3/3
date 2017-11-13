@@ -1,0 +1,9 @@
+var i,j;
+begin
+	if(2>1 && 6>4)
+		i:=1;
+	else
+	begin
+		j:=8;
+	end;
+end.
