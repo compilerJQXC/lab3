@@ -1047,7 +1047,43 @@ void statement(symset fsys)
 				}
 				if(sym == SYM_INC)
 				{
-					//
+					getsym();
+					if(sym != SYM_IDENTIFIER)
+					{
+						printf("expected id here \n");
+						err++;
+						getsym();
+					}
+					else
+					{
+						int i=position(id);
+						mask *mk=(mask *)&table[i];
+						gen(LOD,level-mk->level,mk->address);
+						gen(LIT,0,1);
+						gen(OPR,0,OPR_ADD);
+						gen(STO,level-mk->level,mk->address);
+						getsym();
+					}
+				}
+				else if(sym == SYM_DEC)
+				{
+					getsym();
+					if(sym != SYM_IDENTIFIER)
+					{
+						printf("expected id here \n");
+						err++;
+						getsym();
+					}
+					else
+					{
+						int i=position(id);
+						mask *mk=(mask *)&table[i];
+						gen(LOD,level-mk->level,mk->address);
+						gen(LIT,0,1);
+						gen(OPR,0,OPR_MIN);
+						gen(STO,level-mk->level,mk->address);
+						getsym();
+					}
 				}
 				else
 				{
@@ -1692,18 +1728,21 @@ void interpret()
 } // interpret
 
 //////////////////////////////////////////////////////////////////////
-void main ()
+int main (int argc,char *argv[])
 {
 	FILE* hbin;
-	char s[80];
 	int i;
 	symset set, set1, set2;
 
-	printf("Please input source file name: "); // get file name to be compiled
-	scanf("%s", s);
-	if ((infile = fopen(s, "r")) == NULL)
+	if(argc != 2)
 	{
-		printf("File %s can't be opened.\n", s);
+		printf("The argument of program is too few or too much \n");
+		printf("please input one file name \n");
+		exit(1);
+	}
+	if ((infile = fopen(argv[1], "r")) == NULL)
+	{
+		printf("File %s can't be opened.\n", argv[1]);
 		exit(1);
 	}
 
