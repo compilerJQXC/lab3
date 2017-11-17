@@ -1757,7 +1757,7 @@ void interpret()
 			top=bTemp+i.a;
 			break;
 		case LODARR:
-			// stack[top] = stack[base(stack, b, i.l) + i.a + stack[top]];
+			stack[top] = stack[base(stack, b, i.l) + i.a + stack[top]];
 			// for(int k=0;k<20;k++)printf("%-3d ",stack[k]);
 			break;
 		case STOARR:
