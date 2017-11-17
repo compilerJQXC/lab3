@@ -21,7 +21,8 @@ void error(int n)
 	for (i = 1; i <= cc - 1; i++)
 		printf(" ");
 	printf("^\n");
-	printf("Error %3d: %s\n", n, err_msg[n]);//err_msg[]是各种错误输出信息的数组。在pl0.h_78有定义。
+	printf("Error %3d: %s  ", n, err_msg[n]);
+	printf("the sym in here is %d\n",sym);//err_msg[]是各种错误输出信息的数组。在pl0.h_78有定义。
 	err++;
 } // error
 
@@ -865,15 +866,16 @@ void statement(symset fsys)
 			expr_andbit(fsys);
 			gen(STO,0,-1);
 			gen(RET,0,retOffset); //2017.10.30
-			if(sym == SYM_SEMICOLON)getsym();
-			else
+			if(sym != SYM_SEMICOLON)
 			{
-				printf("Error: expect ; after return statement\n");
+				printf("expected ; in 896 but sym here is %d\n",sym);
 				err++;
+				getsym();
 			}
+			else getsym();
 	}
 	///*************************************************
-	if (sym == SYM_IDENTIFIER)
+	else if (sym == SYM_IDENTIFIER)
 	{ // variable assignment
 		mask* mk;
 		if (! (i = position(id)))
@@ -896,6 +898,13 @@ void statement(symset fsys)
 				printf("Error in statement .After procedureCall \n");
 				exit(0);
 			}
+			if(sym != SYM_SEMICOLON)
+			{
+				printf("expected ; in 903 \n");
+				err++;
+				getsym();
+			}
+			else getsym();
 		}
 		else if (table[i].kind == ID_ARRAY)
 		{
@@ -914,6 +923,13 @@ void statement(symset fsys)
 			{
 				error(13); // ':=' expected.
 			}
+			if(sym != SYM_SEMICOLON)
+			{
+				printf("expected ; in 928 \n");
+				err++;
+				getsym();
+			}
+			else getsym();
 		}
 		else // table[i].kind == ID_VARIABLE
 		{
@@ -931,8 +947,14 @@ void statement(symset fsys)
 			if (i)
 			{
 				gen(STO, level - mk->level, mk->address);
+			}		/* code */
+			if(sym != SYM_SEMICOLON)
+			{
+				printf("expected ; in  953 but sym here is %d \n",sym);
+				err++;
+				getsym();
 			}
-				/* code */
+			else getsym();
 		}
 	}
 	
@@ -962,7 +984,30 @@ void statement(symset fsys)
 			getsym();
 		}
 	} */
-
+	else if(sym == SYM_EXIT)
+	{
+		getsym();
+		if(sym != SYM_LPAREN)
+		{
+			printf("expected leftsparen after exit \n");
+			err++;
+		}
+		getsym();
+		if(sym != SYM_RPAREN)
+		{
+			printf("expected rightsparen after exit \n");
+			err++;
+		}
+		getsym();
+		if(sym != SYM_SEMICOLON)
+		{
+			printf("expected ; in 976 \n");
+			err++;
+			getsym();
+		}
+		else getsym();
+		gen(JMP,0,ENDCX);	
+	}
 	else if (sym == SYM_FOR)
 	{
 		instruction codeTemp[100];
@@ -1209,8 +1254,6 @@ void statement(symset fsys)
 			statement(fsys);
 			code[cx1].a=cx;
 		}
-
-
 	}
 	else if (sym == SYM_BEGIN)
 	{ // block
@@ -1218,16 +1261,16 @@ void statement(symset fsys)
 		set1 = createset(SYM_SEMICOLON, SYM_END, SYM_NULL);
 		set = uniteset(set1, fsys);
 		statement(set);
-		while (sym == SYM_SEMICOLON || inset(sym, statbegsys))
+		while (inset(sym, statbegsys))
 		{
-			if (sym == SYM_SEMICOLON)
-			{
-				getsym();
-			}
-			else
-			{
-				error(10);  //"';' expected.",
-			}
+			// if (sym == SYM_SEMICOLON)
+			// {
+			// getsym();
+			// }
+			// else
+			// {
+			// 	error(10);  //"';' expected.",
+			// }
 			statement(set);
 		} // while
 		destroyset(set1);
@@ -1238,9 +1281,14 @@ void statement(symset fsys)
 		}
 		else
 		{
-			printf("Wrong !!!!!!!!!!!-------%d",sym);
+			// printf("sym in end is %d",sym);
 			error(17); // ';' or 'end' expected.
 		}
+		if(sym != SYM_SEMICOLON && sym != SYM_PERIOD)
+		{
+			error(17);
+		}
+		else if(sym == SYM_SEMICOLON)getsym();
 	}
 	else if (sym == SYM_WHILE)
 	{ // while statement
@@ -1506,19 +1554,19 @@ void block(symset fsys)
 			tx = savedTx;
 			level--;
 
-			if (sym == SYM_SEMICOLON)
-			{
-				getsym();
-				set1 = createset(SYM_IDENTIFIER, SYM_PROCEDURE, SYM_NULL);
-				set = uniteset(statbegsys, set1);
-				// test(set, fsys, 6); 
-				destroyset(set1);
-				destroyset(set);
-			}
-			else
-			{
-				error(5); // Missing ',' or ';'.
-			}
+			// if (sym == SYM_SEMICOLON)
+			// {
+			// 	getsym();
+			// 	set1 = createset(SYM_IDENTIFIER, SYM_PROCEDURE, SYM_NULL);
+			// 	set = uniteset(statbegsys, set1);
+			// 	// test(set, fsys, 6); 
+			// 	destroyset(set1);
+			// 	destroyset(set);
+			// }
+			// else
+			// {
+			// 	error(5); // Missing ',' or ';'.
+			// }
 		} // while
 		dx = block_dx; //restore dx after handling procedure call!
 		set1 = createset(SYM_IDENTIFIER, SYM_NULL);
@@ -1711,7 +1759,6 @@ void interpret()
 		case LODARR:
 			// stack[top] = stack[base(stack, b, i.l) + i.a + stack[top]];
 			// for(int k=0;k<20;k++)printf("%-3d ",stack[k]);
-			printf("\n");
 			break;
 		case STOARR:
 			stack[base(stack, b, i.l) + i.a + stack[top-1]] = stack[top];
@@ -1745,13 +1792,16 @@ int main (int argc,char *argv[])
 		printf("File %s can't be opened.\n", argv[1]);
 		exit(1);
 	}
+	code[ENDCX].f=OPR;
+	code[ENDCX].l=0;
+	code[ENDCX].a=OPR_RET;
 
 	phi = createset(SYM_NULL);
 	relset = createset(SYM_EQU, SYM_NEQ, SYM_LES, SYM_LEQ, SYM_GTR, SYM_GEQ, SYM_NULL);
 	
 	// create begin symbol sets
 	declbegsys = createset(SYM_CONST, SYM_VAR, SYM_PROCEDURE, SYM_ARRAY, SYM_NULL);
-	statbegsys = createset(SYM_BEGIN, SYM_CALL, SYM_IF, SYM_WHILE,SYM_RETURN, SYM_NULL);
+	statbegsys = createset(SYM_BEGIN, SYM_CALL, SYM_IF, SYM_WHILE,SYM_RETURN, SYM_IDENTIFIER, SYM_EXIT, SYM_FOR, SYM_NULL);
 	/*************************9.30添加下面的SYM_NOT****************************/
 	facbegsys = createset(SYM_IDENTIFIER, SYM_NUMBER, SYM_LPAREN, SYM_MINUS, SYM_NOT,SYM_NULL);
 

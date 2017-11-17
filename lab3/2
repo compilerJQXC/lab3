@@ -27,7 +27,7 @@ end;
 begin
 	i:=2;	//assignment
 	result:=1;
-	result:=result && 1;
+	result:=result & 1;
 	i:=i & result;	//and_bit
 	i:=i+myconst;	//plus const
 	a[0][0]:=5;	//assign to array member
