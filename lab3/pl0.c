@@ -846,6 +846,103 @@ void calAdd(int i)
 	}
 }
 
+void short_condition(symset fsys,int truelist,int falselist)
+{
+	int relop;
+	symset set;
+	if (sym == SYM_ODD)
+	{
+		getsym();
+		expr_andbit(fsys);
+		//expression(fsys);
+		gen(OPR, 0, 6);  //OPR_ODD
+		gen(JZ,0,falselist);
+		gen(JNZ,0,truelist+1);
+		gen(BAC,0,2);
+	}
+	else
+	{
+		//set = uniteset(relset, fsys);
+		expr_andbit(relset);
+		//expression(relset);
+		//destroyset(set);
+		if (! inset(sym, relset))
+		{			
+		}
+		else
+		{
+			relop = sym;
+			getsym();
+			expression(fsys);
+			switch (relop)
+			{
+			case SYM_EQU:
+				gen(JE,0,truelist);
+				gen(JNE,0,falselist);
+				gen(BAC,0,2);
+				break;
+			case SYM_NEQ:
+				gen(JNE,0,truelist);
+				gen(JE,0,falselist);
+				gen(BAC,0,2);
+				break;
+			case SYM_LES:
+				gen(JL,0,truelist);
+				gen(JGE,0,falselist);
+				gen(BAC,0,2);
+				break;
+			case SYM_GEQ:
+				gen(JGE,0,truelist);
+				gen(JL,0,falselist);
+				gen(BAC,0,2);
+				break;
+			case SYM_GTR:
+				gen(JG,0,truelist);
+				gen(JLE,0,falselist);
+				gen(BAC,0,2);
+				break;
+			case SYM_LEQ:
+				gen(JLE,0,truelist);
+				gen(JG,0,falselist);
+				gen(BAC,0,2);
+				break;
+			} // switch
+		} // else
+	} // else
+}
+
+void short_condition_and(symset fsys,int truelist,int falselist)
+{
+	int cxTemp=cx;
+	gen(JMP,0,0);
+	short_condition(fsys,cx-1,falselist);
+	while(sym == SYM_AND)
+	{
+		getsym();
+		code[cxTemp].a=cx+1;
+		cxTemp=cx;
+		gen(JMP,0,0);
+		short_condition(fsys,cx-1,falselist);
+	}
+	code[cxTemp].a=truelist;
+}
+
+void short_condition_or(symset fsys,int truelist,int falselist)
+{
+	int cxTemp=cx;
+	gen(JMP,0,0);
+	short_condition_and(fsys,truelist,cx-1);
+	while(sym == SYM_OR)
+	{
+		getsym();
+		code[cxTemp].a=cx+1;
+		cxTemp=cx;
+		gen(JMP,0,0);
+		short_condition_and(fsys,truelist,cx-1);
+	}
+	code[cxTemp].a=falselist;
+}
+
 void statement(symset fsys)
 {
 	int i, cx1, cx2;
@@ -1074,7 +1171,7 @@ void statement(symset fsys)
 				getsym();
 				condition(fsys);
 				CFalseAdd=cx;
-				gen(JPC,0,0);
+				gen(JZ,0,0);
 			}
 			if(sym != SYM_SEMICOLON)
 			{
@@ -1219,6 +1316,7 @@ void statement(symset fsys)
 		getsym();
 		set1 = createset(SYM_THEN, SYM_DO, SYM_NULL);
 		set = uniteset(set1, fsys);
+		int cxTemp,cxTemp2;
 		if(sym != SYM_LPAREN)
 		{
 			printf("expect ( after if \n");
@@ -1227,7 +1325,10 @@ void statement(symset fsys)
 		else
 		{
 			getsym();
-			conditions_or(set); 
+			gen(JMP,0,cx+1);
+			cxTemp=cx;
+			gen(JMP,0,0);
+			short_condition_or(set,cx,cx-1); 
 			
 			if(sym != SYM_RPAREN)
 			{
@@ -1236,23 +1337,20 @@ void statement(symset fsys)
 			}
 			else getsym();
 		}
-		/***9.30修改下面这一句*/
 		destroyset(set1);
 		destroyset(set);
 
-		cx1 = cx;
-		gen(JPC, 0, 0);  
 		statement(fsys);
-		code[cx1].a = cx+1;
-		cx1=cx;// else's beginning is a code that do not executing folllowing codes.
-		if( sym != SYM_ELSE )
-			gen(JMP,0,cx1+1);
-		else
+
+		if(sym == SYM_ELSE)
 		{
+
 			getsym();
+			cxTemp2=cx;
 			gen(JMP,0,0);
+			code[cxTemp].a=cx;
 			statement(fsys);
-			code[cx1].a=cx;
+			code[cxTemp2].a=cx;
 		}
 	}
 	else if (sym == SYM_BEGIN)
@@ -1301,7 +1399,7 @@ void statement(symset fsys)
 		destroyset(set1);
 		destroyset(set);
 		cx2 = cx;
-		gen(JPC, 0, 0);
+		gen(JZ, 0, 0);
 		if (sym == SYM_DO)
 		{
 			getsym();
@@ -1739,12 +1837,12 @@ void interpret()
 		case JMP:
 			pc = i.a;
 			break;
-		case JPC:
+		case JZ:
 			if (stack[top] == 0)
 				pc = i.a;
 			top--;
 			break;
-		case JPN:
+		case JNZ:
 			if (stack[top] == 1)
 				pc = i.a;
 			top--;
@@ -1767,6 +1865,27 @@ void interpret()
 			printf("%d\n",stack[top]);
 			top-=2;
 			break;
+		/******************1117***********************************/
+		case JE:
+			if(stack[top-1] == stack[top])
+				pc=i.a;
+		case JNE:
+			if(stack[top-1] != stack[top])
+				pc=i.a;
+		case JG:
+			if(stack[top-1] > stack[top])
+				pc=i.a;
+		case JGE:
+			if(stack[top-1] >= stack[top])
+				pc=i.a;
+		case JL:
+			if(stack[top-1] < stack[top])
+				pc=i.a;
+		case JLE:
+			if(stack[top-1] <= stack[top])
+				pc=i.a;
+		case BAC:
+			top-=i.a;
 		} // switch
 	}
 	while (pc);
