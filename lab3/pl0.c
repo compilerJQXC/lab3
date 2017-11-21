@@ -1286,6 +1286,7 @@ void statement(symset fsys)
 				err++;
 			}
 			else getsym();
+			
 		}
 		destroyset(set1);
 		destroyset(set);
@@ -1296,6 +1297,7 @@ void statement(symset fsys)
 
 		if(sym == SYM_ELSE)
 		{
+			getsym();
 			code[falseList].a=cx;
 			statement(fsys);
 			code[cxTemp].a=cx;
