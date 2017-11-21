@@ -77,7 +77,7 @@ enum idtype
 
 enum opcode
 {
-	LIT, OPR, LOD, STO, CAL, INT, JMP,JZ,RET,LODARR,STOARR,JNZ,JE,JNE,JG,JGE,JL,JLE,BAC
+	LIT, OPR, LOD, STO, CAL, INT, JMP,JZ,RET,LODARR,STOARR,JNZ,JE,JNE,JG,JGE,JL,JLE,BAC,JZS,JNZS
 };
 
 enum oprcode
@@ -182,10 +182,10 @@ char csym[NSYM + 1] =
 };
 /*9.19增加了 感叹号和两个中括号*/
 
-#define MAXINS   19
+#define MAXINS   21
 char* mnemonic[MAXINS] =
 {
-	"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP", "JZ","RET","LODARR","STOARR","JNZ","JE","JNE","JG","JGE","JL","JLE","BAC"
+	"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP", "JZ","RET","LODARR","STOARR","JNZ","JE","JNE","JG","JGE","JL","JLE","BAC","JZS","JNZS"
 };
 
 typedef struct
@@ -242,3 +242,5 @@ void arrayDecl();
 void block(symset fsys);
 int base(int stack[], int currentLevel, int levelDiff);
 void interpret();
+void short_condition_and(symset fsys);
+void short_condition_or(symset fsys);

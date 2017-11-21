@@ -2,6 +2,6 @@ var i;
 var result;
 begin
 	i:=4;
-	if(5>3 && 4>3)
+	if(1>4 && 4>3)
 		i:=3;
 end.

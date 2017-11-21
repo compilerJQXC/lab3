@@ -453,7 +453,8 @@ void factor(symset fsys)
 	int i;
 	symset set;
 	
-	// test(facbegsys, fsys, 24); // The symbol can not be as the beginning of an expression.
+	// test(facbegsys, fsys, 24); 
+	// The symbol can not be as the beginning of an expression.
 	// printf("the sym in factor is  *************   %d \n",sym);
 	while(inset(sym, facbegsys))
 	{
@@ -721,7 +722,7 @@ void condition(symset fsys)
 		//destroyset(set);
 		if (! inset(sym, relset))
 		{
-			
+			//
 		}
 		else
 		{
@@ -751,6 +752,7 @@ void condition(symset fsys)
 			} // switch
 		} // else
 	} // else
+
 } // condition
 
 /*******************↓↓↓↓9.30号添加下面这一块↓↓↓↓************************/
@@ -846,101 +848,48 @@ void calAdd(int i)
 	}
 }
 
-void short_condition(symset fsys,int truelist,int falselist)
+void short_condition_and(symset fsys)
 {
-	int relop;
-	symset set;
-	if (sym == SYM_ODD)
-	{
-		getsym();
-		expr_andbit(fsys);
-		//expression(fsys);
-		gen(OPR, 0, 6);  //OPR_ODD
-		gen(JZ,0,falselist);
-		gen(JNZ,0,truelist+1);
-		gen(BAC,0,2);
-	}
-	else
-	{
-		//set = uniteset(relset, fsys);
-		expr_andbit(relset);
-		//expression(relset);
-		//destroyset(set);
-		if (! inset(sym, relset))
-		{			
-		}
-		else
-		{
-			relop = sym;
-			getsym();
-			expression(fsys);
-			switch (relop)
-			{
-			case SYM_EQU:
-				gen(JE,0,truelist);
-				gen(JNE,0,falselist);
-				gen(BAC,0,2);
-				break;
-			case SYM_NEQ:
-				gen(JNE,0,truelist);
-				gen(JE,0,falselist);
-				gen(BAC,0,2);
-				break;
-			case SYM_LES:
-				gen(JL,0,truelist);
-				gen(JGE,0,falselist);
-				gen(BAC,0,2);
-				break;
-			case SYM_GEQ:
-				gen(JGE,0,truelist);
-				gen(JL,0,falselist);
-				gen(BAC,0,2);
-				break;
-			case SYM_GTR:
-				gen(JG,0,truelist);
-				gen(JLE,0,falselist);
-				gen(BAC,0,2);
-				break;
-			case SYM_LEQ:
-				gen(JLE,0,truelist);
-				gen(JG,0,falselist);
-				gen(BAC,0,2);
-				break;
-			} // switch
-		} // else
-	} // else
-}
-
-void short_condition_and(symset fsys,int truelist,int falselist)
-{
-	int cxTemp=cx;
-	gen(JMP,0,0);
-	short_condition(fsys,cx-1,falselist);
+	int cxTemp[1000],cxTempCount;
+	cxTempCount=0;
+	condition(fsys);
+	cxTemp[++cxTempCount]=cx;
+	gen(JZS,0,0);
 	while(sym == SYM_AND)
 	{
 		getsym();
-		code[cxTemp].a=cx+1;
-		cxTemp=cx;
-		gen(JMP,0,0);
-		short_condition(fsys,cx-1,falselist);
+		gen(BAC,0,1);
+		condition(fsys);
+		cxTemp[++cxTempCount]=cx;
+		gen(JZS,0,0);
 	}
-	code[cxTemp].a=truelist;
+
+	for(int i=cxTempCount;i>=1;i--)
+	{
+		code[cxTemp[i]].a=cx;
+	}
+
 }
 
-void short_condition_or(symset fsys,int truelist,int falselist)
+void short_condition_or(symset fsys)
 {
-	int cxTemp=cx;
-	gen(JMP,0,0);
-	short_condition_and(fsys,truelist,cx-1);
+	int cxTemp[1000],cxTempCount;
+	cxTempCount=0;
+	short_condition_and(fsys);
+	cxTemp[++cxTempCount]=cx;
+	gen(JNZS,0,0);
 	while(sym == SYM_OR)
 	{
 		getsym();
-		code[cxTemp].a=cx+1;
-		cxTemp=cx;
-		gen(JMP,0,0);
-		short_condition_and(fsys,truelist,cx-1);
+		gen(BAC,0,1);
+		short_condition_and(fsys);
+		cxTemp[++cxTempCount]=cx;
+		gen(JNZS,0,0);
 	}
-	code[cxTemp].a=falselist;
+	for(int i=cxTempCount;i>=1;i--)
+	{
+		code[cxTemp[i]].a=cx;
+	}
 }
 
 void statement(symset fsys)
@@ -1316,7 +1265,8 @@ void statement(symset fsys)
 		getsym();
 		set1 = createset(SYM_THEN, SYM_DO, SYM_NULL);
 		set = uniteset(set1, fsys);
-		int cxTemp,cxTemp2;
+		int falseList;
+		int cxTemp;
 		if(sym != SYM_LPAREN)
 		{
 			printf("expect ( after if \n");
@@ -1325,10 +1275,10 @@ void statement(symset fsys)
 		else
 		{
 			getsym();
-			gen(JMP,0,cx+1);
-			cxTemp=cx;
-			gen(JMP,0,0);
-			short_condition_or(set,cx,cx-1); 
+
+			short_condition_or(set);
+			falseList=cx;
+			gen(JZ,0,0);
 			
 			if(sym != SYM_RPAREN)
 			{
@@ -1341,16 +1291,19 @@ void statement(symset fsys)
 		destroyset(set);
 
 		statement(fsys);
+		cxTemp=cx;
+		gen(JMP,0,0);
 
 		if(sym == SYM_ELSE)
 		{
-
-			getsym();
-			cxTemp2=cx;
-			gen(JMP,0,0);
-			code[cxTemp].a=cx;
+			code[falseList].a=cx;
 			statement(fsys);
-			code[cxTemp2].a=cx;
+			code[cxTemp].a=cx;
+		}
+		else
+		{
+			code[falseList].a=cx;
+			code[cxTemp].a=cx;
 		}
 	}
 	else if (sym == SYM_BEGIN)
@@ -1780,6 +1733,7 @@ void interpret()
 			case OPR_GTR:
 				top--;
 				stack[top] = stack[top] > stack[top + 1];
+				printf("stack[top] = %d\n",stack[top]);
 				break;
 			case OPR_LEQ:
 				top--;
@@ -1842,8 +1796,16 @@ void interpret()
 				pc = i.a;
 			top--;
 			break;
+		case JZS:
+			if(stack[top] == 0)
+				pc = i.a;
+			break;
+		case JNZS:
+			if(stack[top] != 0)
+				pc =i.a;
+			break;
 		case JNZ:
-			if (stack[top] == 1)
+			if (stack[top] != 0)
 				pc = i.a;
 			top--;
 			break;
@@ -1869,23 +1831,30 @@ void interpret()
 		case JE:
 			if(stack[top-1] == stack[top])
 				pc=i.a;
+			break;
 		case JNE:
 			if(stack[top-1] != stack[top])
 				pc=i.a;
+			break;
 		case JG:
 			if(stack[top-1] > stack[top])
 				pc=i.a;
+			break;
 		case JGE:
 			if(stack[top-1] >= stack[top])
 				pc=i.a;
+			break;
 		case JL:
 			if(stack[top-1] < stack[top])
 				pc=i.a;
+			break;
 		case JLE:
 			if(stack[top-1] <= stack[top])
 				pc=i.a;
+			break;
 		case BAC:
 			top-=i.a;
+			break;
 		} // switch
 	}
 	while (pc);
