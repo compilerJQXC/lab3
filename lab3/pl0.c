@@ -483,29 +483,37 @@ void factor(symset fsys)
 					gen(LIT,0,0);
 					readDim=0;
 					calAdd(j);
-					gen(LODARR,level- mk->level,mk->address);
+					if(sym == SYM_BECOMES)
+					{
+						getsym();
+						expr_andbit(fsys);
+						gen(STOARR,level-mk->level,mk->address);
+						gen(CPY,0,2);
+					}
+					else gen(LODARR,level- mk->level,mk->address);
 				}
 				//******************************
+				else if(table[j].kind == ID_CONSTANT)
+				{
+					gen(LIT,0,table[j].value);
+					getsym();
+				}
 				else // normal variable
 				{
 						// printf("Is that correct ? kind = %d \n",table[j].kind);
-					switch (table[j].kind)
-					{
-						mask* mk;
-						case ID_CONSTANT:
-							gen(LIT, 0, table[j].value);
-							break;
-						case ID_VARIABLE:
-							mk = (mask*) &table[j];
-							gen(LOD, level - mk->level, mk->address);
-							break;
-						case ID_PROCEDURE:
-							error(21); // Procedure identifier can not be in an expression.
-							break;
-					} // switch
+					mask* mk;
+					mk = (mask*) &table[j];
 					getsym();
-					if(sym == SYM_INC)
+					if(sym == SYM_BECOMES)
 					{
+						getsym();
+						expr_andbit(fsys);
+						gen(STO,level-mk->level,mk->address);
+						gen(CPY,0,1);
+					}
+					else if(sym == SYM_INC)
+					{
+						gen(LOD, level - mk->level, mk->address);
 						printf("target in SYM_INC\n");
 						gen(LOD, level-mk->level, mk->address);
 						gen(LIT, 0, 1);
@@ -515,12 +523,14 @@ void factor(symset fsys)
 					}
 					else if(sym == SYM_DEC)
 					{
+						gen(LOD, level - mk->level, mk->address);
 						gen(LOD, level-mk->level, mk->address);
 						gen(LIT, 0, 1);
 						gen(OPR, 0, OPR_MIN);
 						gen(STO, level -mk->level, mk->address);
 						getsym();
 					}
+					else gen(LOD, level - mk->level, mk->address);
 						// printf("After return q(n the sym is : %d\n",sym);
 				}
 			}
@@ -1974,6 +1984,8 @@ void interpret()
 		case BAC:
 			top-=i.a;
 			break;
+		case CPY:
+			stack[top]=stack[top+i.a];
 		} // switch
 	}
 	while (pc);

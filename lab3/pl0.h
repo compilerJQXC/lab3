@@ -77,7 +77,7 @@ enum idtype
 
 enum opcode
 {
-	LIT, OPR, LOD, STO, CAL, INT, JMP,JZ,RET,LODARR,STOARR,JNZ,JE,JNE,JG,JGE,JL,JLE,BAC,JZS,JNZS
+	LIT, OPR, LOD, STO, CAL, INT, JMP,JZ,RET,LODARR,STOARR,JNZ,JE,JNE,JG,JGE,JL,JLE,BAC,JZS,JNZS,CPY
 };
 
 enum oprcode
@@ -182,10 +182,10 @@ char csym[NSYM + 1] =
 };
 /*9.19增加了 感叹号和两个中括号*/
 
-#define MAXINS   21
+#define MAXINS   22
 char* mnemonic[MAXINS] =
 {
-	"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP", "JZ","RET","LODARR","STOARR","JNZ","JE","JNE","JG","JGE","JL","JLE","BAC","JZS","JNZS"
+	"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP", "JZ","RET","LODARR","STOARR","JNZ","JE","JNE","JG","JGE","JL","JLE","BAC","JZS","JNZS","CPY"
 };
 
 typedef struct
@@ -223,6 +223,9 @@ FILE* infile;
 int arrayDim[1000];
 int adx=0;
 
+int MulAssignment[50];
+int mulAssignCount=0;
+
 
 void error(int n);
 void getch(void);
@@ -251,5 +254,6 @@ void arrayDecl();
 void block(symset fsys);
 int base(int stack[], int currentLevel, int levelDiff);
 void interpret();
+// void MulAssignment();
 // void short_condition_and(symset fsys);
 // void short_condition_or(symset fsys);
