@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include "set.h"
 
-#define NRW        17     // number of reserved words
+#define NRW        22     // number of reserved words
 #define TXMAX      500    // length of identifier table
 #define MAXNUMLEN  14     // maximum number of digits in numbers
-#define NSYM       17     // maximum number of symbols in array ssym and csym
+#define NSYM       18     // maximum number of symbols in array ssym and csym
 #define MAXIDLEN   10     // length of identifiers
 
 #define MAXADDRESS 32767  // maximum address
@@ -60,13 +60,19 @@ enum symtype
 	SYM_FOR,
 	SYM_AND, //&&
 	SYM_OR,  //||
-	SYM_INC,
+	SYM_INC,// 40
 	SYM_DEC,
 	SYM_ANDBIT,  //&
 	SYM_ORBIT,  //|
 	SYM_XOR,  //^
 	SYM_MOD,   //%
-	SYM_ARRAY
+	SYM_ARRAY,
+	SYM_CONTINUE,
+	SYM_BREAK,
+	SYM_SWITCH,
+	SYM_CASE,// 50
+	SYM_DEFAULT,
+	SYM_COLON
 };
 /*9.19增加了SYM_RETURN之后的几项*/
 
@@ -150,6 +156,10 @@ int  tx = 0;
 int presym;
 int dimDecl=0;
 int readDim=0;
+int loopCx[10];
+int loopLevel=0;
+int *breakCx[10];
+int breakLevel=0;
 
 char line[80];
 
@@ -159,13 +169,13 @@ char* word[NRW + 1] =
 {
 	"", /* place holder */
 	"begin", "call", "const", "do", "end","if",
-	"odd", "procedure", "then", "var", "while","else","elif","exit","return","for","array"
+	"odd", "procedure", "then", "var", "while","else","elif","exit","return","for","array","continue","break","switch","case","default"
 };
 
 int wsym[NRW + 1] =
 {
 	SYM_NULL, SYM_BEGIN, SYM_CALL, SYM_CONST, SYM_DO, SYM_END,
-	SYM_IF, SYM_ODD, SYM_PROCEDURE, SYM_THEN, SYM_VAR, SYM_WHILE,SYM_ELSE,SYM_ELIF,SYM_EXIT,SYM_RETURN,SYM_FOR,SYM_ARRAY
+	SYM_IF, SYM_ODD, SYM_PROCEDURE, SYM_THEN, SYM_VAR, SYM_WHILE,SYM_ELSE,SYM_ELIF,SYM_EXIT,SYM_RETURN,SYM_FOR,SYM_ARRAY,SYM_CONTINUE,SYM_BREAK,SYM_SWITCH,SYM_CASE,SYM_DEFAULT
 };
 /*9.19增加SYM_RETURN 到 SYM_FOR两项*/
 
@@ -173,12 +183,12 @@ int ssym[NSYM + 1] =
 {
 	SYM_NULL, SYM_PLUS, SYM_MINUS, SYM_TIMES, SYM_SLASH,
 	SYM_LPAREN, SYM_RPAREN, SYM_EQU, SYM_COMMA, SYM_PERIOD, SYM_SEMICOLON,SYM_NOT,SYM_LEFTSPAREN,SYM_RIGHTSPAREN,
-	SYM_XOR,SYM_MOD,SYM_ANDBIT
+	SYM_XOR,SYM_MOD,SYM_ANDBIT,SYM_COLON
 };
 
 char csym[NSYM + 1] =
 {
-	' ', '+', '-', '*', '/', '(', ')', '=', ',', '.', ';','!','[',']','^','%','&'
+	' ', '+', '-', '*', '/', '(', ')', '=', ',', '.', ';','!','[',']','^','%','&',':'
 };
 /*9.19增加了 感叹号和两个中括号*/
 

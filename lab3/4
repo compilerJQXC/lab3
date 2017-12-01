@@ -1,0 +1,18 @@
+var i,j,k[3][2],l;
+var result;
+begin
+	i:=j:=l:=4;
+	j:=10;
+
+	switch(j)
+	begin
+		case 10:
+			i:=250;
+			break;
+		case 1:
+			i:=1;
+			break;
+		default:
+			i:=223;
+	end;
+end.

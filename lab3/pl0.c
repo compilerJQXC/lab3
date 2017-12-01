@@ -105,7 +105,8 @@ void getsym(void)
 		}
 		else //:后面接其他就代表是单独的符号。一般是用来做变量类型的定义。
 		{
-			sym = SYM_NULL;       // illegal?
+			sym = SYM_COLON;  
+			getch();     // illegal?
 		}
 	}
 	else if (ch == '>')
@@ -987,6 +988,58 @@ void short_condition_or(symset fsys,list *trueList, list *falseList)
 	tail->next = NULL;
 }
 
+void SwitchBody(symset fsys,int lastcx)
+{
+	if(sym != SYM_CASE && sym != SYM_DEFAULT)
+	{
+		printf("expected case or default in SwitchBody\n");
+		exit(1);
+	}
+	if(sym == SYM_CASE)
+	{
+
+		getsym();
+		if(sym != SYM_NUMBER)
+		{
+			printf("expected number after case\n");
+			exit(1);
+		}
+		if(lastcx != 0)code[lastcx].a=cx;
+		gen(LIT,0,num);
+		int cxTemp = cx;
+		gen(JNE,cx+1,0);
+		getsym();
+		if(sym != SYM_COLON)
+		{
+			printf("expected : in case\n");
+			exit(1);
+		}
+		getsym();
+		statement(fsys);
+		while (inset(sym, statbegsys))
+		{
+			statement(fsys);
+		} 
+		SwitchBody(fsys,cxTemp);
+	}
+	else // default
+	{
+		getsym();
+		if(sym != SYM_COLON)
+		{
+			printf("expected : in case\n");
+			exit(1);
+		}
+		getsym();
+		if(lastcx != 0)code[lastcx].a=cx;
+		statement(fsys);
+		while (inset(sym, statbegsys))
+		{
+			statement(fsys);
+		} 
+	}
+}
+
 void statement(symset fsys)
 {
 	int i, cx1, cx2;
@@ -1100,32 +1153,72 @@ void statement(symset fsys)
 		}
 	}
 	
-	/*else if (sym == SYM_CALL)
-	{ // procedure call
+	else if(sym == SYM_SWITCH)
+	{
+		breakLevel++;
+		breakCx[breakLevel] = (int *)malloc(50*sizeof(int));
+		breakCx[breakLevel][0] = 0;
 		getsym();
-		if (sym != SYM_IDENTIFIER)
+		if(sym != SYM_LPAREN)
 		{
-			error(14); // There must be an identifier to follow the 'call'.
+			printf("expected ( in switch while sym is %d\n",sym);
+			exit(1);
 		}
-		else
+		getsym();
+		if(sym == SYM_IDENTIFIER)
 		{
-			if (! (i = position(id)))
+			int i=position(id);
+			if(i)
 			{
-				error(11); // Undeclared identifier.
-			}
-			else if (table[i].kind == ID_PROCEDURE)
-			{
-				mask* mk;
-				mk = (mask*) &table[i];
-				gen(CAL, level - mk->level, mk->address);
+				mask *mk = (mask *) &table[i];
+				gen(LOD,level-mk->level,mk->address);
 			}
 			else
 			{
-				error(15); // A constant or variable can not be called. 
+				printf("the id undeclared!\n");
 			}
-			getsym();
 		}
-	} */
+		else if(sym == SYM_NUMBER)
+		{
+			gen(LIT,0,num);
+		}
+		getsym();
+		if(sym != SYM_RPAREN)
+		{
+			printf("expected ) in switch while sym is %d\n",sym);
+			printf("Only a number or identifier is permitted\n");
+			exit(1);
+		}
+		getsym();
+		if(sym != SYM_BEGIN)
+		{
+			printf("expected begin in switch while sym is %d\n",sym);
+			exit(1);
+		}
+		getsym();
+		SwitchBody(fsys,0);
+		for(int i=breakCx[breakLevel][0];i>0;i--)
+		{
+			printf("i is %d\n",breakCx[breakLevel][i]);
+			code[breakCx[breakLevel][i]].a = cx;
+		}
+		free(breakCx[breakLevel]);
+		breakLevel--;
+
+		if(sym != SYM_END)
+		{
+			printf("expected end in switch \n ");
+			exit(1);
+		}
+		getsym();
+		if(sym != SYM_SEMICOLON)
+		{
+			printf("expected ; in switch end \n");
+			exit(1);
+		}
+		getsym();
+	}
+
 	else if(sym == SYM_EXIT)
 	{
 		getsym();
@@ -1150,8 +1243,13 @@ void statement(symset fsys)
 		else getsym();
 		gen(JMP,0,ENDCX);	
 	}
+
 	else if (sym == SYM_FOR)
 	{
+		loopLevel++;
+		breakLevel++;
+		breakCx[breakLevel] = (int *)malloc(50*sizeof(int));
+		breakCx[breakLevel][0] = 0;
 		instruction codeTemp[100];
 		int cxTemp,tempCodeCount;
 		int CFalseAdd,ENext;
@@ -1212,6 +1310,7 @@ void statement(symset fsys)
 			}
 			else  // Condition
 			{
+				loopCx[loopLevel]=cx;
 				ENext=cx;
 				getsym();
 				condition(fsys);
@@ -1352,10 +1451,54 @@ void statement(symset fsys)
 				}
 				gen(JMP,0,ENext);
 				code[CFalseAdd].a=cx;
+				for(int i=breakCx[breakLevel][0];i>0;i--)
+				{
+					code[i].a = cx;
+				}
+				free(breakCx[breakLevel]);
+				breakLevel--;
+				loopLevel--;
 			}
 		}
 	}
+
+	else if(sym == SYM_CONTINUE)
+	{
+		if(loopLevel == 0)
+		{
+			printf("Not in a loop !\n");
+			exit(1);
+		}
+		gen(JMP,0,loopCx[loopLevel]);
+		getsym();
+		if(sym != SYM_SEMICOLON)
+		{
+			printf("expect ; in continue while sym is %d\n",sym);
+			exit(1);
+		}
+		else getsym();
+	}
 	
+	else if(sym == SYM_BREAK)
+	{
+		if(breakLevel == 0)
+		{
+			printf("Not in a Break!\n");
+			exit(1);
+		}
+		breakCx[breakLevel][0]++;
+		int count = breakCx[breakLevel][0];
+		breakCx[breakLevel][count]=cx;
+		gen(JMP,0,0);
+		getsym();
+		if(sym != SYM_SEMICOLON)
+		{
+			printf("expected ; in break while sym is %d\n",sym);
+			exit(1);
+		}
+		getsym();
+	}
+
 	else if (sym == SYM_IF)
 	{ // if statement
 		getsym();
@@ -1431,14 +1574,6 @@ void statement(symset fsys)
 		statement(set);
 		while (inset(sym, statbegsys))
 		{
-			// if (sym == SYM_SEMICOLON)
-			// {
-			// getsym();
-			// }
-			// else
-			// {
-			// 	error(10);  //"';' expected.",
-			// }
 			statement(set);
 		} // while
 		destroyset(set1);
@@ -1460,27 +1595,58 @@ void statement(symset fsys)
 	}
 	else if (sym == SYM_WHILE)
 	{ // while statement
-		cx1 = cx;
+		breakLevel++;
+		breakCx[breakLevel] = (int *)malloc(50*sizeof(int));
+		breakCx[breakLevel][0] = 0;
+		loopLevel++;
 		getsym();
-		set1 = createset(SYM_DO, SYM_NULL);
-		set = uniteset(set1, fsys);
-		/***9.30修改下面这一句*/
-		conditions_or(set);
-		destroyset(set1);
-		destroyset(set);
-		cx2 = cx;
-		gen(JZ, 0, 0);
-		if (sym == SYM_DO)
+		list *trueList = (list*)malloc(sizeof(list));
+		list *falseList = (list *)malloc(sizeof(list));
+		trueList->next = NULL;
+		trueList->tail = trueList;
+		falseList->next = NULL;
+		falseList->tail = falseList;
+		int cxTemp;
+
+		if(sym != SYM_LPAREN)
 		{
-			getsym();
+			printf("expected ( in while but the sym is %d\n",sym);
+			exit(1);
 		}
-		else
+		getsym();
+
+		cxTemp = cx;
+		loopCx[loopLevel]=cx;
+		short_condition_or(fsys,trueList,falseList);
+		if(sym != SYM_RPAREN)
 		{
-			error(18); // 'do' expected.
+			printf("expected ) in while but the sym is %d\n",sym);
+			exit(1);
 		}
+		getsym();
+		list *p = trueList->next;
+		while(p != NULL)
+		{
+			code[p->cx].a = cx;
+			p=p->next;
+		}
+
 		statement(fsys);
-		gen(JMP, 0, cx1);   //no conditions to jump
-		code[cx2].a = cx;
+		gen(JMP,0,cxTemp);
+
+		p = falseList->next;
+		while(p != NULL)
+		{
+			code[p->cx].l = cx;
+			p=p->next;
+		}
+		loopLevel--;
+		for(int i=breakCx[breakLevel][0];i>0;i--)
+		{
+			code[i].a = cx;
+		}
+		free(breakCx[breakLevel]);
+		breakLevel--;
 	}
 	// test(fsys, phi, 19);
 } // statement
@@ -2020,7 +2186,7 @@ int main (int argc,char *argv[])
 	
 	// create begin symbol sets
 	declbegsys = createset(SYM_CONST, SYM_VAR, SYM_PROCEDURE, SYM_ARRAY, SYM_NULL);
-	statbegsys = createset(SYM_BEGIN, SYM_CALL, SYM_IF, SYM_WHILE,SYM_RETURN, SYM_IDENTIFIER, SYM_EXIT, SYM_FOR, SYM_NULL);
+	statbegsys = createset(SYM_BEGIN, SYM_CALL, SYM_IF, SYM_WHILE,SYM_RETURN, SYM_IDENTIFIER, SYM_EXIT, SYM_FOR, SYM_CONTINUE, SYM_BREAK,SYM_SWITCH, SYM_NULL);
 	/*************************9.30添加下面的SYM_NOT****************************/
 	facbegsys = createset(SYM_IDENTIFIER, SYM_NUMBER, SYM_LPAREN, SYM_MINUS, SYM_NOT,SYM_NULL);
 
