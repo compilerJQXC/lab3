@@ -208,6 +208,15 @@ typedef struct
 	short address;
 } mask;
 
+struct list_def
+{
+	int cx;
+	struct list_def *next;
+	struct list_def *tail;
+};
+
+typedef struct list_def list;
+
 FILE* infile;
 
 // EOF PL0.h
@@ -242,5 +251,5 @@ void arrayDecl();
 void block(symset fsys);
 int base(int stack[], int currentLevel, int levelDiff);
 void interpret();
-void short_condition_and(symset fsys);
-void short_condition_or(symset fsys);
+// void short_condition_and(symset fsys);
+// void short_condition_or(symset fsys);

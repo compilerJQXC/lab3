@@ -39,7 +39,7 @@ void getch(void)
 		ll = cc = 0;//ll是line length，在pl0.h_121有定义。
 		printf("%5d  ", cx);//cx是下标。 index of current instruction to be generated.
 		while ( (!feof(infile)) // added & modified by alex 01-02-09
-			    && ((ch = getc(infile)) != '\n'))
+			    && ((ch = getc(infile)) != '\n') )
 		{
 			printf("%c", ch);
 			line[++ll] = ch;
@@ -848,48 +848,133 @@ void calAdd(int i)
 	}
 }
 
-void short_condition_and(symset fsys)
+void short_condition(symset fsys, list *trueList, list *falseList)
 {
-	int cxTemp[1000],cxTempCount;
-	cxTempCount=0;
-	condition(fsys);
-	cxTemp[++cxTempCount]=cx;
-	gen(JZS,0,0);
+	int relop;
+	symset set;
+	if (sym == SYM_ODD)
+	{
+		getsym();
+		expr_andbit(fsys);
+		gen(OPR, 0, 6);  //OPR_ODD
+	}
+	else
+	{
+		expr_andbit(relset);
+		if (! inset(sym, relset))
+		{
+			//
+		}
+		else
+		{
+			relop = sym;
+			getsym();
+			expression(fsys);
+			list *tail = trueList->tail;
+			list *pt = (list *)malloc(sizeof(list));
+			tail->next = pt;
+			pt->cx = cx;
+			pt->next = NULL;
+			trueList->tail = pt;
+
+			tail = falseList->tail;
+			list *pf = (list *)malloc(sizeof(list));
+			tail->next = pf;
+			pf->cx = cx;
+			pf->next =NULL;
+			falseList->tail = pf;
+
+			switch (relop)
+			{
+			case SYM_EQU:
+				gen(JE, 0, 0);
+				break;
+			case SYM_NEQ:
+				gen(JNE, 0, 0);
+				break;
+			case SYM_LES:
+				gen(JL, 0, 0);
+				break;
+			case SYM_LEQ:
+				gen(JLE, 0, 0);
+				break;	
+			case SYM_GEQ:
+				gen(JGE, 0, 0);
+				break;
+			case SYM_GTR:
+				gen(JG, 0, 0);
+				break;	
+			} // switch
+		} // else
+	} // else
+
+} // condition
+
+void short_condition_and(symset fsys,list *trueList,list *falseList)
+{
+	list *trueList_1 = (list *)malloc(sizeof(list));
+	list *p;
+	trueList_1->next =NULL;
+	trueList_1->tail = trueList_1;
+	short_condition(fsys,trueList_1,falseList);
 	while(sym == SYM_AND)
 	{
 		getsym();
-		gen(BAC,0,1);
-		condition(fsys);
-		cxTemp[++cxTempCount]=cx;
-		gen(JZS,0,0);
+		p = trueList_1->next;
+		while(1)
+		{
+			if(p == NULL)break;
+			code[p->cx].a=cx;
+			p=p->next;
+		}
+		trueList_1->next = NULL;
+		trueList_1->tail = trueList_1;
+		short_condition(fsys,trueList_1,falseList);
 	}
-
-	for(int i=cxTempCount;i>=1;i--)
+	p = trueList_1->next;
+	list *tail = trueList->tail;
+	if(p!=NULL)
 	{
-		code[cxTemp[i]].a=cx;
+		tail->next = p;
+		while(p->next != NULL)p=p->next;
+		trueList->tail = p;
 	}
-
+	tail = trueList->tail;
+	tail->next = NULL;
 }
 
-void short_condition_or(symset fsys)
+void short_condition_or(symset fsys,list *trueList, list *falseList)
 {
-	int cxTemp[1000],cxTempCount;
-	cxTempCount=0;
-	short_condition_and(fsys);
-	cxTemp[++cxTempCount]=cx;
-	gen(JNZS,0,0);
+	list *falseList_1 = (list *)malloc(sizeof(list));
+	list *p;
+	falseList_1->next = NULL;
+	falseList_1->tail = falseList_1;
+	short_condition_and(fsys,trueList,falseList_1);
 	while(sym == SYM_OR)
 	{
 		getsym();
-		gen(BAC,0,1);
-		short_condition_and(fsys);
-		cxTemp[++cxTempCount]=cx;
-		gen(JNZS,0,0);
+		p = falseList_1->next;
+		while(1)
+		{
+			if(p == NULL)break;
+			code[p->cx].l=cx;
+			p=p->next;
+		}
+		falseList_1->next = NULL;
+		falseList_1->tail = falseList_1;
+
+		short_condition_and(fsys,trueList,falseList_1);
 	}
-	for(int i=cxTempCount;i>=1;i--)
+	p = falseList_1->next;
+	list *tail = falseList->tail;
+	if(p!=NULL)
 	{
-		code[cxTemp[i]].a=cx;
+		tail->next = p;
+		while(p->next != NULL)p=p->next;
+		falseList->tail = p;
 	}
+	tail = falseList->tail;
+	tail->next = NULL;
 }
 
 void statement(symset fsys)
@@ -912,6 +997,7 @@ void statement(symset fsys)
 			expr_andbit(fsys);
 			gen(STO,0,-1);
 			gen(RET,0,retOffset); //2017.10.30
+			gen(BAC,0,1);
 			if(sym != SYM_SEMICOLON)
 			{
 				printf("expected ; in 896 but sym here is %d\n",sym);
@@ -1265,8 +1351,13 @@ void statement(symset fsys)
 		getsym();
 		set1 = createset(SYM_THEN, SYM_DO, SYM_NULL);
 		set = uniteset(set1, fsys);
-		int falseList;
 		int cxTemp;
+		list *trueList_1 = (list *)malloc(sizeof(list));
+		trueList_1->next = NULL;
+		trueList_1->tail = trueList_1;
+		list *falseList_1 = (list *)malloc(sizeof(list));
+		falseList_1->next = NULL;
+		falseList_1->tail = falseList_1;
 		if(sym != SYM_LPAREN)
 		{
 			printf("expect ( after if \n");
@@ -1274,15 +1365,12 @@ void statement(symset fsys)
 		}
 		else
 		{
-			getsym();
-
-			short_condition_or(set);
-			falseList=cx;
-			gen(JZ,0,0);
+			getsym(); 
+			short_condition_or(set,trueList_1,falseList_1);
 			
 			if(sym != SYM_RPAREN)
 			{
-				printf("expect ) in if expression \n");
+				printf("expect ) in if expression while the sym is %d \n",sym);
 				err++;
 			}
 			else getsym();
@@ -1291,6 +1379,12 @@ void statement(symset fsys)
 		destroyset(set1);
 		destroyset(set);
 
+		list *p = trueList_1->next;
+		while(p != NULL)
+		{
+			code[p->cx].a = cx;
+			p=p->next;
+		}
 		statement(fsys);
 		cxTemp=cx;
 		gen(JMP,0,0);
@@ -1298,13 +1392,24 @@ void statement(symset fsys)
 		if(sym == SYM_ELSE)
 		{
 			getsym();
-			code[falseList].a=cx;
+			
+			list *p = falseList_1->next;
+			while(p != NULL)
+			{
+				code[p->cx].l = cx;
+				p=p->next;
+			}
 			statement(fsys);
 			code[cxTemp].a=cx;
 		}
 		else
 		{
-			code[falseList].a=cx;
+			list *p = falseList_1->next;
+			while(p != NULL)
+			{
+				code[p->cx].l = cx;
+				p=p->next;
+			}
 			code[cxTemp].a=cx;
 		}
 	}
@@ -1833,26 +1938,38 @@ void interpret()
 		case JE:
 			if(stack[top-1] == stack[top])
 				pc=i.a;
+			else pc = i.l;
+			top--;
 			break;
 		case JNE:
 			if(stack[top-1] != stack[top])
 				pc=i.a;
+			else pc = i.l;
+			top--;
 			break;
 		case JG:
 			if(stack[top-1] > stack[top])
 				pc=i.a;
+			else pc = i.l;
+			top-=2;
 			break;
 		case JGE:
 			if(stack[top-1] >= stack[top])
 				pc=i.a;
+			else pc = i.l;
+			top-=2;
 			break;
 		case JL:
 			if(stack[top-1] < stack[top])
 				pc=i.a;
+			else pc = i.l;
+			top-=2;
 			break;
 		case JLE:
 			if(stack[top-1] <= stack[top])
 				pc=i.a;
+			else pc = i.l;
+			top-=2;
 			break;
 		case BAC:
 			top-=i.a;
