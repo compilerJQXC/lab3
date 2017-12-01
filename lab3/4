@@ -6,6 +6,9 @@ begin
 
 	switch(j)
 	begin
+		case 4:
+			i:=458;
+			break;
 		case 10:
 			i:=250;
 			break;

@@ -78,12 +78,12 @@ enum symtype
 
 enum idtype
 {
-	ID_CONSTANT, ID_VARIABLE, ID_PROCEDURE,ID_RETURN,ID_ARRAY
+	ID_CONSTANT, ID_VARIABLE, ID_PROCEDURE,ID_RETURN,ID_ARRAY,ID_POINTER
 };
 
 enum opcode
 {
-	LIT, OPR, LOD, STO, CAL, INT, JMP,JZ,RET,LODARR,STOARR,JNZ,JE,JNE,JG,JGE,JL,JLE,BAC,JZS,JNZS,CPY
+	LIT, OPR, LOD, STO, CAL, INT, JMP,JZ,RET,LODARR,STOARR,JNZ,JE,JNE,JG,JGE,JL,JLE,BAC,JZS,JNZS,CPY,STOADD
 };
 
 enum oprcode
@@ -192,10 +192,10 @@ char csym[NSYM + 1] =
 };
 /*9.19增加了 感叹号和两个中括号*/
 
-#define MAXINS   22
+#define MAXINS   24
 char* mnemonic[MAXINS] =
 {
-	"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP", "JZ","RET","LODARR","STOARR","JNZ","JE","JNE","JG","JGE","JL","JLE","BAC","JZS","JNZS","CPY"
+	"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP", "JZ","RET","LODARR","STOARR","JNZ","JE","JNE","JG","JGE","JL","JLE","BAC","JZS","JNZS","CPY","STOADD"
 };
 
 typedef struct

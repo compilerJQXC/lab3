@@ -290,6 +290,10 @@ void enter(int kind)
 		mk = (mask*) &table[tx];
 		mk->level = level;
 		break;
+	case ID_POINTER:
+		mk = (mask*) &table[tx];
+		mk->level = level;
+		mk->address = dx++;
 	} // switch
 
 	// printf("Message of var in table is : name = %s  level = %d  address = %d  \n",table[tx].name,mk->level,(int)(mk->address));
@@ -381,6 +385,20 @@ void vardeclaration(void)
 			getsym();
 			enterArray();
 			arrayDecl();
+		}
+	}
+	else if(sym == SYM_TIMES)
+	{
+		getsym();
+		if(sym == SYM_IDENTIFIER)
+		{
+			enter(ID_POINTER);
+			getsym();
+		}
+		else
+		{
+			printf("expected id as a pointer declaration\n");
+			exit(1);
 		}
 	}
 	else
@@ -628,6 +646,7 @@ void factor(symset fsys)
 			}
 			break;
 		}
+		
 		// test(fsys, createset(SYM_LPAREN, SYM_NULL), 23);
 	} // while
 } // factor
@@ -651,11 +670,11 @@ void term(symset fsys)
 		}
 		else if(mulop == SYM_MOD)
 		{
-			gen(OPR, 0 , OPR_MOD);
+			gen(OPR, 0, OPR_MOD);
 		}
 		else if(mulop ==SYM_XOR)
 		{
-			gen(OPR, 0 , OPR_XOR);
+			gen(OPR, 0, OPR_XOR);
 		}
 		else
 		{
@@ -1148,6 +1167,43 @@ void statement(symset fsys)
 				printf("expected ; in  953 but sym here is %d \n",sym);
 				err++;
 				getsym();
+			}
+			else getsym();
+		}
+	}
+
+	else if(sym == SYM_TIMES)
+	{
+		getsym();
+		if(sym == SYM_IDENTIFIER)
+		{
+			int i=position(id);
+			if(!i)
+			{
+				printf("Id has not declared\n");
+				exit(1);
+			}
+			if(table[i].kind != ID_POINTER)
+			{
+				printf("The variable is not a pointer \n");
+				exit(1);
+			}
+			mask *mk = (mask *)&table[i];
+			gen(LOD,level-mk->level,mk->address);
+
+			getsym();
+			if(sym != SYM_BECOMES)
+			{
+				printf("expected := here while sym is %d\n",sym);
+				exit(1);
+			}
+			getsym();
+			expr_andbit(fsys);
+			gen(STOADD,0,0);
+			if(sym != SYM_SEMICOLON)
+			{
+				printf("expected ; in the end of SYM_TIMES \n");
+				exit(1);
 			}
 			else getsym();
 		}
@@ -2049,7 +2105,7 @@ void interpret()
 			} // switch
 			break;
 		case LOD:
-			stack[++top] = stack[base(stack, b, i.l) + i.a]; // push var on stack 
+			stack[++top] = stack[base(stack, b, i.l) + i.a]; // push var on stack
 			break;
 		case STO: // store var on stack
 			stack[base(stack, b, i.l) + i.a] = stack[top];
@@ -2115,13 +2171,13 @@ void interpret()
 			if(stack[top-1] == stack[top])
 				pc=i.a;
 			else pc = i.l;
-			top--;
+			top-=2;
 			break;
 		case JNE:
 			if(stack[top-1] != stack[top])
 				pc=i.a;
 			else pc = i.l;
-			top--;
+			top-=2;
 			break;
 		case JG:
 			if(stack[top-1] > stack[top])
@@ -2152,6 +2208,11 @@ void interpret()
 			break;
 		case CPY:
 			stack[top]=stack[top+i.a];
+			break;
+		case STOADD:
+			stack[stack[top-1]]=stack[top];
+			top-=2;
+			break;
 		} // switch
 	}
 	while (pc);
@@ -2186,7 +2247,7 @@ int main (int argc,char *argv[])
 	
 	// create begin symbol sets
 	declbegsys = createset(SYM_CONST, SYM_VAR, SYM_PROCEDURE, SYM_ARRAY, SYM_NULL);
-	statbegsys = createset(SYM_BEGIN, SYM_CALL, SYM_IF, SYM_WHILE,SYM_RETURN, SYM_IDENTIFIER, SYM_EXIT, SYM_FOR, SYM_CONTINUE, SYM_BREAK,SYM_SWITCH, SYM_NULL);
+	statbegsys = createset(SYM_BEGIN, SYM_CALL, SYM_IF, SYM_WHILE,SYM_RETURN, SYM_IDENTIFIER, SYM_EXIT, SYM_FOR, SYM_CONTINUE, SYM_BREAK,SYM_SWITCH,SYM_TIMES, SYM_NULL);
 	/*************************9.30添加下面的SYM_NOT****************************/
 	facbegsys = createset(SYM_IDENTIFIER, SYM_NUMBER, SYM_LPAREN, SYM_MINUS, SYM_NOT,SYM_NULL);
 
