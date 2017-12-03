@@ -1,8 +1,14 @@
-var i,*j;
+var i,*j,k;
+procedure func(i,*j)
+var k;
 begin
-	i:=233;
-	j:=4;
-	*j:=222;
-	if(i=222)
-		i:=250;
+	i:=23;
+	j:=&i;
+	k:=*j;
+	if(k = i)
+		k:=288;
+	return 0;
+end;
+begin
+	func(i,j,k);
 end.

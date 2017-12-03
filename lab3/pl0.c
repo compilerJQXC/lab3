@@ -426,7 +426,7 @@ void procedureCall()
 {
 	int i;
 	mask *mk;
-	if(sym == SYM_IDENTIFIER || sym == SYM_NUMBER)
+	if(sym == SYM_IDENTIFIER || sym == SYM_NUMBER || sym == SYM_ANDBIT)
 	{
 		expr_andbit(statbegsys);
 		procedureCall();
@@ -646,7 +646,52 @@ void factor(symset fsys)
 			}
 			break;
 		}
-		
+		else if(sym == SYM_ANDBIT)
+		{
+			getsym();
+			if(sym == SYM_IDENTIFIER)
+			{
+				int i=position(id);
+				if(i || table[i].kind == ID_ARRAY || table[i].kind == ID_VARIABLE)
+				{
+					mask *mk = (mask *) &table[i];
+					gen(LODADD,level-mk->level,mk->address);
+					getsym();
+				}
+				else 
+				{
+					printf("There are some errors in SYM_ANDBIT factor\n");
+					exit(1);
+				}
+			}
+			else
+			{
+				printf("expected SYM_IDENTIFIER after LODADD SYM_ANDBIT\n");
+				exit(1);
+			}
+		}
+		else if(sym == SYM_TIMES)
+		{
+			getsym();
+			if(sym == SYM_IDENTIFIER)
+			{
+				int i=position(id);
+				if(!i)
+				{
+					printf("id not declared\n");
+					exit(1);
+				}
+				mask *mk = (mask *)&table[i];
+				gen(LODPT,level-mk->level,mk->address);
+				getsym();
+			}
+			else
+			{
+				printf("there are some errors in SYM_TIMES factor\n");
+				exit(1);
+			}
+		}
+
 		// test(fsys, createset(SYM_LPAREN, SYM_NULL), 23);
 	} // while
 } // factor
@@ -1189,7 +1234,6 @@ void statement(symset fsys)
 				exit(1);
 			}
 			mask *mk = (mask *)&table[i];
-			gen(LOD,level-mk->level,mk->address);
 
 			getsym();
 			if(sym != SYM_BECOMES)
@@ -1199,7 +1243,7 @@ void statement(symset fsys)
 			}
 			getsym();
 			expr_andbit(fsys);
-			gen(STOADD,0,0);
+			gen(STOPT,level-mk->level,mk->address);
 			if(sym != SYM_SEMICOLON)
 			{
 				printf("expected ; in the end of SYM_TIMES \n");
@@ -1740,6 +1784,23 @@ void paraList()
 			paraList();
 			enterPara(idTemp,ID_VARIABLE);
 		}
+		else if(sym == SYM_TIMES)
+		{
+			getsym();
+			if(sym == SYM_IDENTIFIER)
+			{
+				char idTemp[MAXIDLEN+1];
+				strcpy(idTemp,id);
+				getsym();
+				paraList();
+				enterPara(idTemp,ID_POINTER);
+			}
+			else
+			{
+				printf("expected identifier in paraList\n");
+				exit(1);
+			}
+		}
 		else
 		{
 			printf("error in paraList 2\n");
@@ -2209,10 +2270,16 @@ void interpret()
 		case CPY:
 			stack[top]=stack[top+i.a];
 			break;
-		case STOADD:
-			stack[stack[top-1]]=stack[top];
-			top-=2;
+		case STOPT:
+			stack[stack[base(stack,b,i.l)+i.a]]=stack[top];
+			printf("%d\n",stack[top]);
+			top--;
 			break;
+		case LODADD:
+			stack[++top] = base(stack,b,i.l)+i.a;
+			break;
+		case LODPT:
+			stack[++top] = stack[stack[base(stack,b,i.l)+i.a]];
 		} // switch
 	}
 	while (pc);
@@ -2249,7 +2316,7 @@ int main (int argc,char *argv[])
 	declbegsys = createset(SYM_CONST, SYM_VAR, SYM_PROCEDURE, SYM_ARRAY, SYM_NULL);
 	statbegsys = createset(SYM_BEGIN, SYM_CALL, SYM_IF, SYM_WHILE,SYM_RETURN, SYM_IDENTIFIER, SYM_EXIT, SYM_FOR, SYM_CONTINUE, SYM_BREAK,SYM_SWITCH,SYM_TIMES, SYM_NULL);
 	/*************************9.30添加下面的SYM_NOT****************************/
-	facbegsys = createset(SYM_IDENTIFIER, SYM_NUMBER, SYM_LPAREN, SYM_MINUS, SYM_NOT,SYM_NULL);
+	facbegsys = createset(SYM_IDENTIFIER, SYM_NUMBER, SYM_LPAREN, SYM_MINUS, SYM_NOT,SYM_ANDBIT,SYM_TIMES, SYM_NULL);
 
 	err = cc = cx = ll = 0; // initialize global variables
 	ch = ' ';
