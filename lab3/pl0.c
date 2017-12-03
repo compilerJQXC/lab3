@@ -673,23 +673,8 @@ void factor(symset fsys)
 		else if(sym == SYM_TIMES)
 		{
 			getsym();
-			if(sym == SYM_IDENTIFIER)
-			{
-				int i=position(id);
-				if(!i)
-				{
-					printf("id not declared\n");
-					exit(1);
-				}
-				mask *mk = (mask *)&table[i];
-				gen(LODPT,level-mk->level,mk->address);
-				getsym();
-			}
-			else
-			{
-				printf("there are some errors in SYM_TIMES factor\n");
-				exit(1);
-			}
+			TimesBody(fsys);
+			gen(LODA,0,0);
 		}
 
 		// test(fsys, createset(SYM_LPAREN, SYM_NULL), 23);
@@ -1104,6 +1089,32 @@ void SwitchBody(symset fsys,int lastcx)
 	}
 }
 
+
+void TimesBody(symset fsys)
+{
+	if(sym == SYM_TIMES)
+	{
+		getsym();
+		TimesBody(fsys);
+		gen(LODA,0,0);
+	}
+	else if(sym == SYM_IDENTIFIER)
+	{
+		int i=position(id);
+		mask *mk = (mask*)&table[i];
+		if(i)
+		{
+			gen(LOD,level-mk->level,mk->address);
+			getsym();
+		}
+		else
+		{
+			printf("the id not declared in TimesBody\n");
+			exit(1);
+		}
+	}
+}
+
 void statement(symset fsys)
 {
 	int i, cx1, cx2;
@@ -1220,30 +1231,12 @@ void statement(symset fsys)
 	else if(sym == SYM_TIMES)
 	{
 		getsym();
-		if(sym == SYM_IDENTIFIER)
+		TimesBody(fsys);
+		if(sym == SYM_BECOMES)
 		{
-			int i=position(id);
-			if(!i)
-			{
-				printf("Id has not declared\n");
-				exit(1);
-			}
-			if(table[i].kind != ID_POINTER)
-			{
-				printf("The variable is not a pointer \n");
-				exit(1);
-			}
-			mask *mk = (mask *)&table[i];
-
-			getsym();
-			if(sym != SYM_BECOMES)
-			{
-				printf("expected := here while sym is %d\n",sym);
-				exit(1);
-			}
 			getsym();
 			expr_andbit(fsys);
-			gen(STOPT,level-mk->level,mk->address);
+			gen(STOA,0,0);
 			if(sym != SYM_SEMICOLON)
 			{
 				printf("expected ; in the end of SYM_TIMES \n");
@@ -2270,16 +2263,16 @@ void interpret()
 		case CPY:
 			stack[top]=stack[top+i.a];
 			break;
-		case STOPT:
-			stack[stack[base(stack,b,i.l)+i.a]]=stack[top];
+		case STOA:
+			stack[stack[top-1]]=stack[top];
 			printf("%d\n",stack[top]);
-			top--;
+			top-=2;
+			break;
+		case LODA:
+			stack[top] = stack[stack[top]];
 			break;
 		case LODADD:
 			stack[++top] = base(stack,b,i.l)+i.a;
-			break;
-		case LODPT:
-			stack[++top] = stack[stack[base(stack,b,i.l)+i.a]];
 		} // switch
 	}
 	while (pc);
