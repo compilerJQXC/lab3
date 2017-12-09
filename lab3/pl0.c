@@ -923,7 +923,22 @@ void short_condition(symset fsys, list *trueList, list *falseList)
 		expr_andbit(relset);
 		if (! inset(sym, relset))
 		{
-			//
+			getsym();
+			list *tail = trueList->tail;
+			list *pt = (list *)malloc(sizeof(list));
+			tail->next = pt;
+			pt->cx = cx;
+			pt->next = NULL;
+			trueList->tail = pt;
+
+			tail = falseList->tail;
+			list *pf = (list *)malloc(sizeof(list));
+			tail->next = pf;
+			pf->cx = cx;
+			pf->next = NULL;
+			falseList->tail = pf;
+
+			gen(JNZ,0,0);
 		}
 		else
 		{
@@ -963,7 +978,8 @@ void short_condition(symset fsys, list *trueList, list *falseList)
 				break;
 			case SYM_GTR:
 				gen(JG, 0, 0);
-				break;	
+				break;
+
 			} // switch
 		} // else
 	} // else
@@ -1100,18 +1116,19 @@ void TimesBody(symset fsys)
 	}
 	else if(sym == SYM_IDENTIFIER)
 	{
-		int i=position(id);
-		mask *mk = (mask*)&table[i];
-		if(i)
-		{
-			gen(LOD,level-mk->level,mk->address);
-			getsym();
-		}
-		else
-		{
-			printf("the id not declared in TimesBody\n");
-			exit(1);
-		}
+		expr_andbit(fsys);
+		// int i=position(id);
+		// mask *mk = (mask*)&table[i];
+		// if(i)
+		// {
+		// 	gen(LOD,level-mk->level,mk->address);
+		// 	getsym();
+		// }
+		// else
+		// {
+		// 	printf("the id not declared in TimesBody\n");
+		// 	exit(1);
+		// }
 	}
 }
 

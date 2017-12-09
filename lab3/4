@@ -4,6 +4,12 @@ begin
 	i:=j:=l:=4;
 	j:=10;
 
+	for(e;e)
+	{
+		
+		e;
+	}
+
 	switch(j)
 	begin
 		case 4:
