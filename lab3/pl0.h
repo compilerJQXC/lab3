@@ -190,7 +190,6 @@ char csym[NSYM + 1] =
 {
 	' ', '+', '-', '*', '/', '(', ')', '=', ',', '.', ';','!','[',']','^','%','&',':'
 };
-/*9.19增加了 感叹号和两个中括号*/
 
 #define MAXINS   25
 char* mnemonic[MAXINS] =
@@ -265,6 +264,7 @@ void block(symset fsys);
 int base(int stack[], int currentLevel, int levelDiff);
 void interpret();
 void TimesBody(symset fsys);
+void short_condition_or(symset fsys,list *trueList, list *falseList);
 // void MulAssignment();
 // void short_condition_and(symset fsys);
 // void short_condition_or(symset fsys);

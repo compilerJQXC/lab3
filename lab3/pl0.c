@@ -224,7 +224,7 @@ void getsym(void)
 		}
 		else  //不是其中一个，无法识别的符号
 		{
-			printf("Fatal Error: Unknown character.\n");
+			printf("Fatal Error: Unknown character. And the presym is %d\n", sym);
 			//printf("%c",ch);
 			exit(1);
 		}
@@ -390,6 +390,7 @@ void vardeclaration(void)
 	else if(sym == SYM_TIMES)
 	{
 		getsym();
+		while(sym == SYM_TIMES)getsym();
 		if(sym == SYM_IDENTIFIER)
 		{
 			enter(ID_POINTER);
@@ -918,12 +919,22 @@ void short_condition(symset fsys, list *trueList, list *falseList)
 		expr_andbit(fsys);
 		gen(OPR, 0, 6);  //OPR_ODD
 	}
+	// else if(sym == SYM_LPAREN)
+	// {
+	// 	getsym();
+	// 	short_condition_or(fsys, trueList,falseList);
+	// 	if(sym != SYM_RPAREN)
+	// 	{
+	// 		printf("expected ) in short_condition while the sym is %d\n",sym);
+	// 		exit(1);
+	// 	}
+	// 	else getsym();
+	// }
 	else
 	{
 		expr_andbit(relset);
 		if (! inset(sym, relset))
-		{
-			getsym();
+		{	
 			list *tail = trueList->tail;
 			list *pt = (list *)malloc(sizeof(list));
 			tail->next = pt;
@@ -1117,18 +1128,6 @@ void TimesBody(symset fsys)
 	else if(sym == SYM_IDENTIFIER)
 	{
 		expr_andbit(fsys);
-		// int i=position(id);
-		// mask *mk = (mask*)&table[i];
-		// if(i)
-		// {
-		// 	gen(LOD,level-mk->level,mk->address);
-		// 	getsym();
-		// }
-		// else
-		// {
-		// 	printf("the id not declared in TimesBody\n");
-		// 	exit(1);
-		// }
 	}
 }
 
@@ -1356,6 +1355,13 @@ void statement(symset fsys)
 
 	else if (sym == SYM_FOR)
 	{
+		list *trueList_1 = (list *)malloc(sizeof(list));
+		trueList_1->next = NULL;
+		trueList_1->tail = trueList_1;
+		list *falseList_1 = (list *)malloc(sizeof(list));
+		falseList_1->next = NULL;
+		falseList_1->tail = falseList_1;	
+
 		loopLevel++;
 		breakLevel++;
 		breakCx[breakLevel] = (int *)malloc(50*sizeof(int));
@@ -1419,13 +1425,20 @@ void statement(symset fsys)
 				err++;
 			}
 			else  // Condition
-			{
-				loopCx[loopLevel]=cx;
-				ENext=cx;
+			{	
+				ENext = cx;
 				getsym();
-				condition(fsys);
-				CFalseAdd=cx;
-				gen(JZ,0,0);
+				short_condition_or(fsys,trueList_1,falseList_1);
+
+				loopCx[loopLevel]=cx;
+				
+				list *p = trueList_1->next;
+				while(p != NULL)
+				{
+					code[p->cx].a = cx;
+					p=p->next;
+				}
+
 			}
 			if(sym != SYM_SEMICOLON)
 			{
@@ -1560,7 +1573,6 @@ void statement(symset fsys)
 					code[cx++].a=codeTemp[i].a;
 				}
 				gen(JMP,0,ENext);
-				code[CFalseAdd].a=cx;
 				for(int i=breakCx[breakLevel][0];i>0;i--)
 				{
 					code[i].a = cx;
@@ -1568,6 +1580,13 @@ void statement(symset fsys)
 				free(breakCx[breakLevel]);
 				breakLevel--;
 				loopLevel--;
+				
+				list *p = falseList_1->next;
+				while(p != NULL)
+				{
+					code[p->cx].l = cx;
+					p=p->next;
+				}
 			}
 		}
 	}
@@ -1919,6 +1938,7 @@ void block(symset fsys)
 	{
 		getsym();
 		paraList();
+		
 		enterPara("return",ID_RETURN);
 		// mask *mkTemp;
 		// for(int i=1;i<=tx;i++)

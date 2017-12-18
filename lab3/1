@@ -2,7 +2,7 @@ var i,j,k[3][2],l;
 var result;
 begin
 	i:=j:=k[2][1]:=l:=4;
-	if(1>2||3>4)
+	if(i>2)
 		i:=3;
 	else
 	begin
